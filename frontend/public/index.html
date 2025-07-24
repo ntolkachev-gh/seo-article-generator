@@ -1,20 +1,299 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Генератор SEO-статей с помощью искусственного интеллекта"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SEO Article Generator</title>
-  </head>
-  <body>
-    <noscript>Вам необходимо включить JavaScript для работы этого приложения.</noscript>
-    <div id="root"></div>
-  </body>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/marked/marked.min.js"></script>
+    <style>
+        .loading {
+            display: none;
+        }
+        .loading.show {
+            display: block;
+        }
+        .error {
+            color: #dc2626;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            margin: 1rem 0;
+        }
+        .success {
+            color: #059669;
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">SEO Article Generator</h1>
+            <p class="text-gray-600">Генерация SEO-оптимизированных статей с помощью AI</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="flex justify-center mb-8">
+            <div class="bg-white rounded-lg shadow p-1">
+                <button id="nav-generate" class="px-4 py-2 rounded-md bg-blue-600 text-white font-medium">Генерация</button>
+                <button id="nav-history" class="px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100">История</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Generation Form -->
+            <div id="generation-form" class="max-w-2xl mx-auto">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-2xl font-semibold mb-6">Создать новую статью</h2>
+                    
+                    <form id="article-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Тема статьи</label>
+                            <input type="text" id="topic" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Например: Лучшие способы похудения">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Тезисы</label>
+                            <textarea id="thesis" rows="4" required
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      placeholder="Основные тезисы и ключевые моменты статьи..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Модель</label>
+                            <select id="model" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (быстрее, дешевле)</option>
+                                <option value="gpt-4">GPT-4 (качественнее, дороже)</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                            Сгенерировать статью
+                        </button>
+                    </form>
+                    
+                    <div id="loading" class="loading text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <p class="mt-2 text-gray-600">Генерируем статью...</p>
+                    </div>
+                    
+                    <div id="error-message" class="error" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Article View -->
+            <div id="article-view" class="max-w-4xl mx-auto" style="display: none;">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-semibold">Сгенерированная статья</h2>
+                        <button id="back-to-form" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                            Назад к форме
+                        </button>
+                    </div>
+                    
+                    <div id="article-content" class="prose max-w-none">
+                        <!-- Article content will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div id="history-view" class="max-w-4xl mx-auto" style="display: none;">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-semibold">История статей</h2>
+                        <button id="back-to-form-from-history" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                            Назад к форме
+                        </button>
+                    </div>
+                    
+                    <div id="history-content">
+                        <p class="text-gray-600">История статей будет загружена здесь...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'https://seo-article-generator-app-8a9fa9a58cbb.herokuapp.com';
+        
+        // Elements
+        const navGenerate = document.getElementById('nav-generate');
+        const navHistory = document.getElementById('nav-history');
+        const generationForm = document.getElementById('generation-form');
+        const articleView = document.getElementById('article-view');
+        const historyView = document.getElementById('history-view');
+        const articleForm = document.getElementById('article-form');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+        const articleContent = document.getElementById('article-content');
+        const backToForm = document.getElementById('back-to-form');
+        const backToFormFromHistory = document.getElementById('back-to-form-from-history');
+        const historyContent = document.getElementById('history-content');
+
+        // Navigation
+        navGenerate.addEventListener('click', () => showView('generation'));
+        navHistory.addEventListener('click', () => showView('history'));
+        backToForm.addEventListener('click', () => showView('generation'));
+        backToFormFromHistory.addEventListener('click', () => showView('generation'));
+
+        function showView(view) {
+            generationForm.style.display = view === 'generation' ? 'block' : 'none';
+            articleView.style.display = view === 'article' ? 'block' : 'none';
+            historyView.style.display = view === 'history' ? 'block' : 'none';
+            
+            // Update navigation
+            navGenerate.className = view === 'generation' ? 'px-4 py-2 rounded-md bg-blue-600 text-white font-medium' : 'px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100';
+            navHistory.className = view === 'history' ? 'px-4 py-2 rounded-md bg-blue-600 text-white font-medium' : 'px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100';
+        }
+
+        // Form submission
+        articleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                topic: document.getElementById('topic').value,
+                thesis: document.getElementById('thesis').value,
+                model: document.getElementById('model').value
+            };
+
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await axios.post(`${API_BASE_URL}/api/articles/generate`, formData);
+                displayArticle(response.data);
+                showView('article');
+            } catch (error) {
+                showError('Ошибка при генерации статьи: ' + (error.response?.data?.detail || error.message));
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        function displayArticle(article) {
+            const content = `
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-2">Тема: ${article.topic}</h3>
+                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                        <span>SEO оценка: <span class="font-semibold text-green-600">${article.seo_score}/10</span></span>
+                        <span>Модель: ${article.model_used}</span>
+                        <span>Дата: ${new Date(article.created_at).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold mb-2">Структура статьи:</h4>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <pre class="whitespace-pre-wrap text-sm">${article.structure}</pre>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold mb-2">Полный текст статьи:</h4>
+                    <div class="prose max-w-none">
+                        ${marked.parse(article.article)}
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold mb-2">Ключевые слова:</h4>
+                    <div class="flex flex-wrap gap-2">
+                        ${article.keywords.map(keyword => `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${keyword}</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold mb-2">Использование API:</h4>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <p><strong>Модель:</strong> ${article.openai_usage.model}</p>
+                        <p><strong>Токены:</strong> ${article.openai_usage.total_tokens}</p>
+                        <p><strong>Стоимость:</strong> $${article.openai_usage.cost_usd}</p>
+                    </div>
+                </div>
+            `;
+            
+            articleContent.innerHTML = content;
+        }
+
+        function showLoading(show) {
+            loading.classList.toggle('show', show);
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        // Load history
+        async function loadHistory() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/api/articles`);
+                displayHistory(response.data);
+            } catch (error) {
+                historyContent.innerHTML = '<p class="text-red-600">Ошибка при загрузке истории: ' + error.message + '</p>';
+            }
+        }
+
+        function displayHistory(articles) {
+            if (articles.length === 0) {
+                historyContent.innerHTML = '<p class="text-gray-600">История статей пуста</p>';
+                return;
+            }
+
+            const historyHTML = articles.map(article => `
+                <div class="border-b border-gray-200 py-4 last:border-b-0">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold">${article.topic}</h3>
+                            <p class="text-gray-600 text-sm mt-1">${article.thesis.substring(0, 100)}...</p>
+                            <div class="flex items-center space-x-4 text-sm text-gray-500 mt-2">
+                                <span>SEO: ${article.seo_score}/10</span>
+                                <span>Модель: ${article.model_used}</span>
+                                <span>${new Date(article.created_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <button onclick="viewArticle('${article.id}')" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                            Просмотр
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            historyContent.innerHTML = historyHTML;
+        }
+
+        async function viewArticle(articleId) {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/api/articles/${articleId}`);
+                displayArticle(response.data);
+                showView('article');
+            } catch (error) {
+                showError('Ошибка при загрузке статьи: ' + error.message);
+            }
+        }
+
+        // Load history when history tab is clicked
+        navHistory.addEventListener('click', loadHistory);
+    </script>
+</body>
 </html> 
