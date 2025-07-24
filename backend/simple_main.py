@@ -33,6 +33,18 @@ try:
 except Exception as e:
     print(f"Warning: Could not create database tables: {e}")
 
+# Initialize services with error handling
+try:
+    serp_service = SERPService()
+    openai_service = OpenAIService()
+    seo_service = SEOService()
+    print("Services initialized successfully")
+except Exception as e:
+    print(f"Warning: Could not initialize services: {e}")
+    serp_service = None
+    openai_service = None
+    seo_service = None
+
 app = FastAPI(
     title="SEO Article Generator",
     description="API для генерации SEO-статей с помощью OpenAI",
@@ -48,10 +60,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize services
-serp_service = SERPService()
-openai_service = OpenAIService()
-seo_service = SEOService()
+# Services are initialized above with error handling
 
 @app.get("/")
 async def root():
@@ -66,6 +75,12 @@ async def generate_article(
     request: schemas.GenerationRequest,
     db: Session = Depends(get_db)
 ):
+    if not all([serp_service, openai_service, seo_service]):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Services are not available. Please try again later."
+        )
+    
     try:
         # 1. SERP Analysis
         print(f"Starting SERP analysis for topic: {request.topic}")
