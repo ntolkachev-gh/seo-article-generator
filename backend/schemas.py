@@ -13,6 +13,7 @@ class ArticleResponse(BaseModel):
     id: UUID
     topic: str
     thesis: str
+    style_examples: Optional[str] = ""
     keywords: List[str]
     structure: str
     article: str
@@ -26,6 +27,8 @@ class ArticleResponse(BaseModel):
 class ArticleListResponse(BaseModel):
     id: UUID
     topic: str
+    thesis: str
+    style_examples: Optional[str] = ""
     seo_score: float
     model_used: str
     created_at: datetime
@@ -49,6 +52,7 @@ class OpenAIUsageResponse(BaseModel):
 class GenerationRequest(BaseModel):
     topic: str
     thesis: str
+    style_examples: Optional[str] = ""
     model: str = "gpt-3.5-turbo"
 
 class GenerationResponse(BaseModel):

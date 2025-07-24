@@ -12,6 +12,7 @@ class Article(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     topic = Column(Text, nullable=False)
     thesis = Column(Text, nullable=False)
+    style_examples = Column(Text, nullable=True)  # Новое поле для примеров стиля
     keywords = Column(JSONB, nullable=False)
     structure = Column(Text, nullable=False)
     article = Column(Text, nullable=False)
