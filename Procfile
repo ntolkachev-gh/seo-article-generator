@@ -1,1 +1,1 @@
-web: cd backend && python heroku_main.py 
+web: cd backend && python simple_main.py 
