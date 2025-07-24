@@ -3,6 +3,7 @@
 Simplified FastAPI app for Heroku deployment
 """
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
