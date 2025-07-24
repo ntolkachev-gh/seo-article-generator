@@ -7,6 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Fallback для marked.js если основной CDN не загрузился
+        if (typeof marked === 'undefined') {
+            console.log('Основной CDN marked не загрузился, пробуем альтернативный...');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/marked@4.3.0/marked.min.js';
+            script.onerror = function() {
+                console.log('Альтернативный CDN marked также не загрузился, будем использовать fallback рендеринг');
+            };
+            document.head.appendChild(script);
+        }
+    </script>
     <style>
         .loading {
             display: none;
@@ -472,11 +484,17 @@
                 } else {
                     // Fallback: простая замена основных Markdown элементов
                     return text
-                        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                        .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mb-4">$1</h1>')
+                        .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mb-3">$1</h2>')
+                        .replace(/^### (.*$)/gim, '<h3 class="text-lg font-medium mb-2">$1</h3>')
+                        .replace(/^\*\*([^*]+)\*\*$/gim, '<h4 class="font-semibold mb-2">$1</h4>')
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/^- (.*$)/gim, '<li class="ml-4">• $1</li>')
+                        .replace(/^\d+\. (.*$)/gim, '<li class="ml-4">$1</li>')
+                        .replace(/\n\n/g, '</p><p class="mb-2">')
+                        .replace(/^/, '<p class="mb-2">')
+                        .replace(/$/, '</p>')
                         .replace(/\n/g, '<br>');
                 }
             } catch (error) {
