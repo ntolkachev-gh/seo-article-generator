@@ -189,6 +189,18 @@
         const backToForm = document.getElementById('back-to-form');
         const backToFormFromHistory = document.getElementById('back-to-form-from-history');
         const historyContent = document.getElementById('history-content');
+        
+        // Проверяем наличие всех необходимых элементов
+        const requiredElements = {
+            navGenerate, navHistory, generationForm, articleView, historyView, 
+            articleForm, loading, errorMessage, articleContent, historyContent
+        };
+        
+        for (const [name, element] of Object.entries(requiredElements)) {
+            if (!element) {
+                console.error(`Элемент ${name} не найден в DOM`);
+            }
+        }
 
         // Navigation
         navGenerate.addEventListener('click', () => showView('generation'));
@@ -197,12 +209,23 @@
         backToFormFromHistory.addEventListener('click', () => showView('generation'));
 
         function showView(view) {
-            generationForm.style.display = view === 'generation' ? 'block' : 'none';
-            articleView.style.display = view === 'article' ? 'block' : 'none';
-            historyView.style.display = view === 'history' ? 'block' : 'none';
+            // Показываем нужный вид
+            if (view === 'generation' || view === 'form') {
+                generationForm.style.display = 'block';
+                articleView.style.display = 'none';
+                historyView.style.display = 'none';
+            } else if (view === 'article') {
+                generationForm.style.display = 'none';
+                articleView.style.display = 'block';
+                historyView.style.display = 'none';
+            } else if (view === 'history') {
+                generationForm.style.display = 'none';
+                articleView.style.display = 'none';
+                historyView.style.display = 'block';
+            }
             
             // Update navigation
-            navGenerate.className = view === 'generation' ? 'px-4 py-2 rounded-md bg-blue-600 text-white font-medium' : 'px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100';
+            navGenerate.className = (view === 'generation' || view === 'form') ? 'px-4 py-2 rounded-md bg-blue-600 text-white font-medium' : 'px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100';
             navHistory.className = view === 'history' ? 'px-4 py-2 rounded-md bg-blue-600 text-white font-medium' : 'px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100';
         }
 
@@ -361,7 +384,14 @@
         }
 
         function displayArticle(article) {
-            document.getElementById('articleContent').innerHTML = `
+            const articleContentElement = document.getElementById('article-content');
+            if (!articleContentElement) {
+                console.error('Элемент article-content не найден');
+                showError('Ошибка отображения: элемент не найден');
+                return;
+            }
+            
+            articleContentElement.innerHTML = `
                 <div class="mb-6">
                     <h3 class="text-xl font-semibold mb-2">Тема: ${article.topic}</h3>
                     <div class="flex items-center space-x-4 text-sm text-gray-600">
@@ -460,7 +490,9 @@
                 }
                 
                 if (article) {
+                    console.log('Отображаем статью:', article);
                     displayArticle(article);
+                    console.log('Переключаемся на вид article');
                     showView('article');
                 } else {
                     showError('Статья не найдена ни на сервере, ни в локальном хранилище.');
