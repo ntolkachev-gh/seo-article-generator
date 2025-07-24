@@ -13,6 +13,7 @@ class Article(Base):
     topic = Column(Text, nullable=False)
     thesis = Column(Text, nullable=False)
     style_examples = Column(Text, nullable=True)  # Новое поле для примеров стиля
+    character_count = Column(Integer, nullable=True, default=5000)  # Новое поле для количества знаков
     keywords = Column(JSONB, nullable=False)
     structure = Column(Text, nullable=False)
     article = Column(Text, nullable=False)

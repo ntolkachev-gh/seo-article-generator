@@ -14,6 +14,7 @@ class ArticleResponse(BaseModel):
     topic: str
     thesis: str
     style_examples: Optional[str] = ""
+    character_count: Optional[int] = 5000
     keywords: List[str]
     structure: str
     article: str
@@ -29,6 +30,7 @@ class ArticleListResponse(BaseModel):
     topic: str
     thesis: str
     style_examples: Optional[str] = ""
+    character_count: Optional[int] = 5000
     seo_score: float
     model_used: str
     created_at: datetime
@@ -53,6 +55,7 @@ class GenerationRequest(BaseModel):
     topic: str
     thesis: str
     style_examples: Optional[str] = ""
+    character_count: Optional[int] = 5000
     model: str = "gpt-3.5-turbo"
 
 class GenerationResponse(BaseModel):

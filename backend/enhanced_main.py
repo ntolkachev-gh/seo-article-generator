@@ -82,6 +82,7 @@ class GenerationRequest(BaseModel):
     topic: str
     thesis: str
     style_examples: Optional[str] = ""  # Новое поле для примеров стиля
+    character_count: Optional[int] = 5000  # Новое поле для количества знаков
     model: str
 
 class OpenAIUsageResponse(BaseModel):
@@ -98,6 +99,7 @@ class GenerationResponse(BaseModel):
     topic: str
     thesis: str
     style_examples: Optional[str] = ""
+    character_count: Optional[int] = 5000
     keywords: List[str]
     structure: str
     article: str
@@ -111,6 +113,7 @@ class ArticleListResponse(BaseModel):
     topic: str
     thesis: str
     style_examples: Optional[str] = ""
+    character_count: Optional[int] = 5000
     seo_score: float
     model_used: str
     created_at: datetime
@@ -136,11 +139,11 @@ async def health_check():
         "services": SERVICES_AVAILABLE
     }
 
-async def generate_with_style(topic: str, thesis: str, style_examples: str, model: str):
+async def generate_with_style(topic: str, thesis: str, style_examples: str, character_count: int, model: str):
     """Generate article with style examples using OpenAI"""
     if not SERVICES_AVAILABLE:
         # Fallback to mock generation
-        return await generate_mock_article(topic, thesis, style_examples, model)
+        return await generate_mock_article(topic, thesis, style_examples, character_count, model)
     
     try:
         # Создаем промпт с учетом стиля
@@ -221,8 +224,8 @@ async def generate_with_style(topic: str, thesis: str, style_examples: str, mode
 
 {style_prompt}
 
-Требования:
-- Объем: 2000-3000 слов
+         Требования:
+- Объем: примерно {character_count} знаков
 - Используй ключевые слова естественно
 - Добавь конкретные примеры
 - Сделай текст информативным и полезным
@@ -324,9 +327,9 @@ async def generate_with_style(topic: str, thesis: str, style_examples: str, mode
         
     except Exception as e:
         print(f"Error in AI generation: {e}")
-        return await generate_mock_article(topic, thesis, style_examples, model)
+        return await generate_mock_article(topic, thesis, style_examples, character_count, model)
 
-async def generate_mock_article(topic: str, thesis: str, style_examples: str, model: str):
+async def generate_mock_article(topic: str, thesis: str, style_examples: str, character_count: int, model: str):
     """Fallback mock generation"""
     keywords = ["SEO", "оптимизация", "контент", "статья", topic.lower()]
     
@@ -400,6 +403,7 @@ async def generate_article(
             request.topic, 
             request.thesis, 
             request.style_examples or "",
+            request.character_count or 5000,
             request.model
         )
         
@@ -411,6 +415,7 @@ async def generate_article(
             'topic': request.topic,
             'thesis': request.thesis,
             'style_examples': request.style_examples or "",
+            'character_count': request.character_count or 5000,
             'keywords': result['keywords'],
             'structure': result['structure'],
             'article': result['article'],
@@ -427,6 +432,7 @@ async def generate_article(
                     'topic': request.topic,
                     'thesis': request.thesis,
                     'style_examples': request.style_examples or '',
+                    'character_count': request.character_count or 5000,
                     'keywords': result['keywords'],
                     'structure': result['structure'],
                     'article': result['article'],
@@ -472,6 +478,7 @@ async def generate_article(
             topic=article_data['topic'],
             thesis=article_data['thesis'],
             style_examples=article_data['style_examples'],
+            character_count=article_data['character_count'],
             keywords=article_data['keywords'],
             structure=article_data['structure'],
             article=article_data['article'],
@@ -502,6 +509,7 @@ async def get_articles(
                     topic=article.topic,
                     thesis=article.thesis,
                     style_examples=getattr(article, 'style_examples', ''),
+                    character_count=getattr(article, 'character_count', 5000),
                     seo_score=article.seo_score,
                     model_used=article.model_used,
                     created_at=article.created_at
@@ -513,12 +521,13 @@ async def get_articles(
     
     # Fallback to memory
     articles = articles_db[skip:skip + limit]
-    return [
+            return [
         ArticleListResponse(
             id=article['id'],
             topic=article['topic'],
             thesis=article['thesis'],
             style_examples=article.get('style_examples', ''),
+            character_count=article.get('character_count', 5000),
             seo_score=article['seo_score'],
             model_used=article['model_used'],
             created_at=article['created_at']
@@ -552,6 +561,7 @@ async def get_article(
                     topic=article.topic,
                     thesis=article.thesis,
                     style_examples=getattr(article, 'style_examples', ''),
+                    character_count=getattr(article, 'character_count', 5000),
                     keywords=article.keywords,
                     structure=article.structure,
                     article=article.article,
@@ -586,6 +596,7 @@ async def get_article(
         topic=article['topic'],
         thesis=article['thesis'],
         style_examples=article.get('style_examples', ''),
+        character_count=article.get('character_count', 5000),
         keywords=article['keywords'],
         structure=article['structure'],
         article=article['article'],
