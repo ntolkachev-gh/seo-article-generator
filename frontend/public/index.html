@@ -6,7 +6,7 @@
     <title>SEO Article Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <script src="https://unpkg.com/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         .loading {
             display: none;
@@ -154,6 +154,15 @@
     <script>
         // Configuration
         const API_BASE_URL = 'https://seo-article-generator-app-8a9fa9a58cbb.herokuapp.com';
+        
+        // Проверяем загрузку библиотек
+        window.addEventListener('load', function() {
+            console.log('Axios доступен:', typeof axios !== 'undefined');
+            console.log('Marked доступен:', typeof marked !== 'undefined');
+            if (typeof marked !== 'undefined') {
+                console.log('Marked версия:', marked.version || 'неизвестно');
+            }
+        });
         
         // Elements
         const navGenerate = document.getElementById('nav-generate');
@@ -384,7 +393,7 @@
                 <div class="mb-6">
                     <h4 class="text-lg font-semibold mb-2">Готовая статья:</h4>
                     <div class="bg-white p-4 rounded-md border prose max-w-none">
-                        ${marked.parse(article.article)}
+                        ${renderMarkdown(article.article)}
                     </div>
                 </div>
                 
@@ -450,6 +459,30 @@
                 showLoading(false);
                 console.error('Общая ошибка при загрузке статьи:', error);
                 showError('Ошибка при загрузке статьи: ' + error.message);
+            }
+        }
+
+        function renderMarkdown(text) {
+            try {
+                // Проверяем, доступна ли библиотека marked
+                if (typeof marked !== 'undefined' && marked.parse) {
+                    return marked.parse(text);
+                } else if (typeof marked !== 'undefined' && marked) {
+                    return marked(text);
+                } else {
+                    // Fallback: простая замена основных Markdown элементов
+                    return text
+                        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/\n/g, '<br>');
+                }
+            } catch (error) {
+                console.error('Ошибка при рендеринге Markdown:', error);
+                // Возвращаем текст с базовым форматированием
+                return '<pre class="whitespace-pre-wrap">' + text + '</pre>';
             }
         }
 
