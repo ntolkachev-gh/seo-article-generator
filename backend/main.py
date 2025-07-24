@@ -14,8 +14,8 @@ from services.openai_service import OpenAIService
 from services.seo_service import SEOService
 from config import settings
 
-# Создаем таблицы
-Base.metadata.create_all(bind=engine)
+# Создаем таблицы только при запуске приложения
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="SEO Article Generator",
