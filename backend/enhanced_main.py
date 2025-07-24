@@ -224,7 +224,7 @@ async def generate_with_style(topic: str, thesis: str, style_examples: str, char
 
 {style_prompt}
 
-         Требования:
+Требования:
 - Объем: примерно {character_count} знаков
 - Используй ключевые слова естественно
 - Добавь конкретные примеры
@@ -521,7 +521,7 @@ async def get_articles(
     
     # Fallback to memory
     articles = articles_db[skip:skip + limit]
-            return [
+    return [
         ArticleListResponse(
             id=article['id'],
             topic=article['topic'],
