@@ -286,6 +286,7 @@
                             <div class="flex items-center space-x-4 text-sm text-gray-500 mt-2">
                                 <span>SEO: ${article.seo_score}/10</span>
                                 <span>Модель: ${article.model_used}</span>
+                                <span>Стиль: ${article.style_examples ? 'Да' : 'Нет'}</span>
                                 <span>${new Date(article.created_at).toLocaleDateString()}</span>
                             </div>
                         </div>

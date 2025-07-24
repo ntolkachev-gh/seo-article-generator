@@ -392,7 +392,7 @@ async def generate_mock_article(topic: str, thesis: str, style_examples: str, mo
 @app.post("/api/articles/generate", response_model=GenerationResponse)
 async def generate_article(
     request: GenerationRequest,
-    db: Session = Depends(get_db) if DATABASE_AVAILABLE else None
+    db: Session = Depends(get_db) if DATABASE_AVAILABLE else Depends(lambda: None)
 ):
     try:
         # Generate article with style
@@ -426,6 +426,7 @@ async def generate_article(
                 db_article = crud.create_article(db, {
                     'topic': request.topic,
                     'thesis': request.thesis,
+                    'style_examples': request.style_examples or '',
                     'keywords': result['keywords'],
                     'structure': result['structure'],
                     'article': result['article'],
@@ -490,7 +491,7 @@ async def generate_article(
 async def get_articles(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db) if DATABASE_AVAILABLE else None
+    db: Session = Depends(get_db) if DATABASE_AVAILABLE else Depends(lambda: None)
 ):
     if DATABASE_AVAILABLE and db:
         try:
@@ -500,7 +501,7 @@ async def get_articles(
                     id=str(article.id),
                     topic=article.topic,
                     thesis=article.thesis,
-                    style_examples="",  # Will be added to model later
+                    style_examples=getattr(article, 'style_examples', ''),
                     seo_score=article.seo_score,
                     model_used=article.model_used,
                     created_at=article.created_at
@@ -528,7 +529,7 @@ async def get_articles(
 @app.get("/api/articles/{article_id}", response_model=GenerationResponse)
 async def get_article(
     article_id: str,
-    db: Session = Depends(get_db) if DATABASE_AVAILABLE else None
+    db: Session = Depends(get_db) if DATABASE_AVAILABLE else Depends(lambda: None)
 ):
     if DATABASE_AVAILABLE and db:
         try:
@@ -550,7 +551,7 @@ async def get_article(
                     id=str(article.id),
                     topic=article.topic,
                     thesis=article.thesis,
-                    style_examples="",  # Will be added to model later
+                    style_examples=getattr(article, 'style_examples', ''),
                     keywords=article.keywords,
                     structure=article.structure,
                     article=article.article,
@@ -597,7 +598,7 @@ async def get_article(
 @app.delete("/api/articles/{article_id}")
 async def delete_article(
     article_id: str,
-    db: Session = Depends(get_db) if DATABASE_AVAILABLE else None
+    db: Session = Depends(get_db) if DATABASE_AVAILABLE else Depends(lambda: None)
 ):
     if DATABASE_AVAILABLE and db:
         try:
