@@ -1,0 +1,1 @@
+web: cd backend && python heroku_main.py 

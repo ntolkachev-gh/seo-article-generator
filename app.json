@@ -1,0 +1,31 @@
+{
+  "name": "seo-article-generator",
+  "description": "AI-powered SEO article generator with FastAPI and React",
+  "repository": "https://github.com/yourusername/seo-article-generator",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["python", "fastapi", "react", "openai", "seo", "ai"],
+  "env": {
+    "DATABASE_URL": {
+      "description": "PostgreSQL database URL",
+      "required": true
+    },
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key for content generation",
+      "required": true
+    },
+    "FRONTEND_URL": {
+      "description": "Frontend URL (for CORS)",
+      "value": "https://your-app-name.herokuapp.com"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
+} 
