@@ -134,14 +134,14 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-1 sm:px-2 md:px-4 py-2 sm:py-3 md:py-4">
+      <main className="flex-1 px-0 sm:px-1 md:px-2 py-1 sm:py-2 md:py-3">
         {currentView === 'form' && (
           <div className="space-y-2 sm:space-y-3 md:space-y-4">
             <div className="text-center">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 md:mb-4">
                 Создайте качественную SEO-статью за минуты
               </h2>
-              <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-1 sm:px-2">
+              <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-0 sm:px-1">
                 Используйте мощь искусственного интеллекта для генерации 
                 оптимизированных статей с автоматическим анализом ключевых слов 
                 и SEO-оценкой
@@ -205,7 +205,7 @@ function App() {
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-auto py-2 sm:py-3 md:py-4">
-        <div className="px-1 sm:px-2 md:px-4">
+        <div className="px-0 sm:px-1 md:px-2">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
             <div className="flex items-center gap-1 sm:gap-2">
               <span>Создано с</span>
