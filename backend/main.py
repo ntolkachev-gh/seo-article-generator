@@ -79,6 +79,25 @@ async def options_models():
     """Обработчик OPTIONS запросов для моделей"""
     return {"message": "OK"}
 
+@app.get("/api/models", response_model=schemas.ModelsResponse)
+async def get_available_models():
+    """Получить список доступных моделей с информацией о ценах"""
+    models = []
+    
+    # Получаем доступные модели из AI сервиса
+    available_models = ai_service.get_available_models()
+    
+    for model_info in available_models:
+        models.append(schemas.ModelInfo(
+            id=model_info["id"],
+            name=model_info["name"],
+            description=model_info["description"],
+            category=model_info["category"],
+            pricing=model_info.get("pricing", {"input": 0, "output": 0})
+        ))
+    
+    return schemas.ModelsResponse(models=models)
+
 @app.options("/api/health")
 async def options_health():
     """Обработчик OPTIONS запросов для health check"""
