@@ -35,10 +35,23 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
       console.error('Failed to load models:', err);
       // Fallback to basic models
       setModels([
+        // Fast and cost-effective
         { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Самый быстрый и дешевый', category: 'fast', pricing: { input: 0.00015, output: 0.0006 } },
         { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Быстрый и экономичный', category: 'fast', pricing: { input: 0.0015, output: 0.002 } },
+        { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', description: 'Быстрый и дешевый', category: 'fast', pricing: { input: 0.00025, output: 0.00125 } },
+        
+        // Balanced
         { id: 'gpt-4o', name: 'GPT-4o', description: 'Оптимальное качество и скорость', category: 'balanced', pricing: { input: 0.005, output: 0.015 } },
+        { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Высокое качество', category: 'balanced', pricing: { input: 0.01, output: 0.03 } },
+        { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', description: 'Сбалансированное качество', category: 'balanced', pricing: { input: 0.003, output: 0.015 } },
+        
+        // High quality
         { id: 'gpt-4', name: 'GPT-4', description: 'Максимальное качество', category: 'quality', pricing: { input: 0.03, output: 0.06 } },
+        { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Альтернатива GPT-4', category: 'quality', pricing: { input: 0.003, output: 0.015 } },
+        
+        // Premium
+        { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Премиум качество', category: 'premium', pricing: { input: 0.015, output: 0.075 } },
+        { id: 'gpt-4-32k', name: 'GPT-4 32K', description: 'Длинные контексты', category: 'premium', pricing: { input: 0.06, output: 0.12 } },
       ]);
     } finally {
       setModelsLoading(false);
