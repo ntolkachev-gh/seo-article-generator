@@ -4,6 +4,15 @@ from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
 import asyncio
+import logging
+import traceback
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 from database import get_db, engine
 from models import Base
@@ -82,96 +91,158 @@ async def generate_article(
 ):
     """Генерирует новую SEO-статью"""
     try:
+        logger.info(f"🚀 Начинаем генерацию статьи для темы: {request.topic}")
+        logger.info(f"📊 Параметры запроса: модель={request.model}, тезис={request.thesis}")
+        
         # Проверяем доступность модели перед началом генерации
+        logger.info("🔍 Проверяем доступность модели...")
         if not ai_service.is_model_available(request.model):
+            logger.error(f"❌ Модель {request.model} недоступна")
             # Проверяем, есть ли вообще доступные сервисы
             if not ai_service.openai_service and not ai_service.anthropic_service:
+                logger.error("❌ Ни один AI сервис не доступен")
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="Сервис AI недоступен. Проверьте настройки API ключей (OPENAI_API_KEY или ANTHROPIC_API_KEY)."
                 )
             else:
+                logger.error(f"❌ Модель {request.model} недоступна, но другие сервисы работают")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Модель {request.model} недоступна. Проверьте настройки API ключей."
                 )
         
+        logger.info("✅ Модель доступна, продолжаем...")
+        
         # 1. Анализ SERP
-        serp_data = serp_service.analyze_topic(request.topic)
-        keywords = serp_data["keywords"]
-        questions = serp_data["questions"]
+        logger.info("🔎 Этап 1: Анализ SERP...")
+        try:
+            serp_data = serp_service.analyze_topic(request.topic)
+            keywords = serp_data["keywords"]
+            questions = serp_data["questions"]
+            logger.info(f"✅ SERP анализ завершен. Ключевых слов: {len(keywords)}, вопросов: {len(questions)}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка в SERP анализе: {str(e)}")
+            logger.error(f"📝 Подробности SERP ошибки: {traceback.format_exc()}")
+            raise
         
         # 2. Генерация структуры статьи
-        structure, structure_usage = ai_service.generate_structure(
-            request.topic, 
-            request.thesis, 
-            keywords, 
-            questions, 
-            request.model
-        )
+        logger.info("📋 Этап 2: Генерация структуры статьи...")
+        try:
+            structure, structure_usage = ai_service.generate_structure(
+                request.topic, 
+                request.thesis, 
+                keywords, 
+                questions, 
+                request.model
+            )
+            logger.info(f"✅ Структура сгенерирована. Токенов использовано: {structure_usage.get('total_tokens', 0)}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка при генерации структуры: {str(e)}")
+            logger.error(f"📝 Подробности ошибки структуры: {traceback.format_exc()}")
+            raise
         
         # 3. Генерация полной статьи с новыми параметрами
-        article_text, article_usage = ai_service.generate_article(
-            request.topic,
-            request.thesis,
-            structure,
-            keywords,
-            request.style_examples or "",  # Добавлен параметр style_examples
-            request.character_count or 5000,  # Добавлен параметр character_count
-            request.model
-        )
+        logger.info("📝 Этап 3: Генерация полной статьи...")
+        logger.info(f"📊 Параметры: style_examples={bool(request.style_examples)}, character_count={request.character_count or 5000}")
+        try:
+            article_text, article_usage = ai_service.generate_article(
+                request.topic,
+                request.thesis,
+                structure,
+                keywords,
+                request.style_examples or "",  # Добавлен параметр style_examples
+                request.character_count or 5000,  # Добавлен параметр character_count
+                request.model
+            )
+            logger.info(f"✅ Статья сгенерирована. Длина: {len(article_text)} символов, токенов: {article_usage.get('total_tokens', 0)}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка при генерации статьи: {str(e)}")
+            logger.error(f"📝 Подробности ошибки генерации: {traceback.format_exc()}")
+            raise
         
         # 4. Расчет SEO-оценки
-        seo_score = seo_service.calculate_seo_score(article_text, keywords)
+        logger.info("📈 Этап 4: Расчет SEO-оценки...")
+        try:
+            seo_score = seo_service.calculate_seo_score(article_text, keywords)
+            logger.info(f"✅ SEO-оценка рассчитана: {seo_score}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка при расчете SEO: {str(e)}")
+            logger.error(f"📝 Подробности ошибки SEO: {traceback.format_exc()}")
+            raise
         
         # 5. Сохранение в базу данных с новыми полями
-        article_data = {
-            "topic": request.topic,
-            "thesis": request.thesis,
-            "style_examples": request.style_examples or "",  # Добавлено
-            "character_count": request.character_count or 5000,  # Добавлено
-            "keywords": keywords,
-            "structure": structure,
-            "article": article_text,
-            "seo_score": seo_score,
-            "model_used": request.model
-        }
-        
-        db_article = crud.create_article(db, article_data)
+        logger.info("💾 Этап 5: Сохранение в базу данных...")
+        try:
+            article_data = {
+                "topic": request.topic,
+                "thesis": request.thesis,
+                "style_examples": request.style_examples or "",  # Добавлено
+                "character_count": request.character_count or 5000,  # Добавлено
+                "keywords": keywords,
+                "structure": structure,
+                "article": article_text,
+                "seo_score": seo_score,
+                "model_used": request.model
+            }
+            
+            db_article = crud.create_article(db, article_data)
+            logger.info(f"✅ Статья сохранена в БД с ID: {db_article.id}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка при сохранении статьи: {str(e)}")
+            logger.error(f"📝 Подробности ошибки БД: {traceback.format_exc()}")
+            raise
         
         # 6. Сохранение информации об использовании OpenAI
-        total_usage = {
-            "prompt_tokens": structure_usage["prompt_tokens"] + article_usage["prompt_tokens"],
-            "completion_tokens": structure_usage["completion_tokens"] + article_usage["completion_tokens"],
-            "total_tokens": structure_usage["total_tokens"] + article_usage["total_tokens"]
-        }
+        logger.info("💰 Этап 6: Расчет и сохранение статистики использования...")
+        try:
+            total_usage = {
+                "prompt_tokens": structure_usage["prompt_tokens"] + article_usage["prompt_tokens"],
+                "completion_tokens": structure_usage["completion_tokens"] + article_usage["completion_tokens"],
+                "total_tokens": structure_usage["total_tokens"] + article_usage["total_tokens"]
+            }
+            
+            cost = ai_service.calculate_cost(total_usage, request.model)  # Изменено на ai_service
+            logger.info(f"💵 Стоимость генерации: ${cost:.6f}")
+            
+            usage_data = {
+                "article_id": db_article.id,
+                "model": request.model,
+                "prompt_tokens": total_usage["prompt_tokens"],
+                "completion_tokens": total_usage["completion_tokens"],
+                "total_tokens": total_usage["total_tokens"],
+                "cost_usd": cost
+            }
+            
+            db_usage = crud.create_openai_usage(db, usage_data)
+            logger.info(f"✅ Статистика использования сохранена")
+        except Exception as e:
+            logger.error(f"❌ Ошибка при сохранении статистики: {str(e)}")
+            logger.error(f"📝 Подробности ошибки статистики: {traceback.format_exc()}")
+            raise
         
-        cost = ai_service.calculate_cost(total_usage, request.model)  # Изменено на ai_service
-        
-        usage_data = {
-            "article_id": db_article.id,
-            "model": request.model,
-            "prompt_tokens": total_usage["prompt_tokens"],
-            "completion_tokens": total_usage["completion_tokens"],
-            "total_tokens": total_usage["total_tokens"],
-            "cost_usd": cost
-        }
-        
-        db_usage = crud.create_openai_usage(db, usage_data)
-        
-        return schemas.GenerationResponse(
-            article_id=db_article.id,
-            topic=db_article.topic,
-            thesis=db_article.thesis,
-            style_examples=getattr(db_article, 'style_examples', ''),  # Добавлено
-            character_count=getattr(db_article, 'character_count', 5000),  # Добавлено
-            keywords=db_article.keywords,
-            structure=db_article.structure,
-            article=db_article.article,
-            seo_score=db_article.seo_score,
-            model_used=db_article.model_used,
-            usage=schemas.OpenAIUsageResponse.from_orm(db_usage)
-        )
+        # 7. Формирование ответа
+        logger.info("🎉 Этап 7: Формирование финального ответа...")
+        try:
+            response = schemas.GenerationResponse(
+                article_id=db_article.id,
+                topic=db_article.topic,
+                thesis=db_article.thesis,
+                style_examples=getattr(db_article, 'style_examples', ''),  # Добавлено
+                character_count=getattr(db_article, 'character_count', 5000),  # Добавлено
+                keywords=db_article.keywords,
+                structure=db_article.structure,
+                article=db_article.article,
+                seo_score=db_article.seo_score,
+                model_used=db_article.model_used,
+                usage=schemas.OpenAIUsageResponse.from_orm(db_usage)
+            )
+            logger.info(f"🎊 УСПЕХ! Статья полностью сгенерирована. ID: {db_article.id}, длина: {len(article_text)} символов")
+            return response
+        except Exception as e:
+            logger.error(f"❌ Ошибка при формировании ответа: {str(e)}")
+            logger.error(f"📝 Подробности ошибки ответа: {traceback.format_exc()}")
+            raise
         
     except ValueError as e:
         # Специальная обработка для ошибок сервисов
@@ -186,6 +257,7 @@ async def generate_article(
                 detail=f"Ошибка валидации: {str(e)}"
             )
     except Exception as e:
+        logger.error(f"Ошибка генерации статьи: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ошибка генерации статьи: {str(e)}"

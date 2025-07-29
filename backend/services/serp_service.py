@@ -3,18 +3,28 @@ from bs4 import BeautifulSoup
 from typing import List, Dict
 import re
 from urllib.parse import quote_plus
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import settings
 
 class SERPService:
     def __init__(self):
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
+        self.serp_api_key = settings.SERP_API_KEY
+        print(f"SERP_API_KEY: {'Set' if self.serp_api_key else 'Not set'}")
     
     def analyze_topic(self, topic: str) -> Dict[str, List[str]]:
         """Анализирует тему и возвращает ключевые слова, заголовки и вопросы"""
         try:
-            # Поиск в Google
-            search_results = self._google_search(topic)
+            # Сначала пробуем официальный SERP API
+            if self.serp_api_key:
+                search_results = self._serp_api_search(topic)
+            else:
+                # Fallback на Google поиск
+                search_results = self._google_search(topic)
             
             # Извлекаем данные
             keywords = self._extract_keywords(topic, search_results)
@@ -38,8 +48,44 @@ class SERPService:
                 "related_searches": []
             }
     
+    def _serp_api_search(self, query: str) -> List[Dict]:
+        """Выполняет поиск через официальный SERP API"""
+        try:
+            url = "https://serpapi.com/search"
+            params = {
+                "q": query,
+                "api_key": self.serp_api_key,
+                "engine": "google",
+                "num": 10,
+                "hl": "ru",
+                "gl": "ru"
+            }
+            
+            response = requests.get(url, params=params, timeout=15)
+            response.raise_for_status()
+            
+            data = response.json()
+            results = []
+            
+            # Извлекаем результаты из SERP API ответа
+            if "organic_results" in data:
+                for result in data["organic_results"]:
+                    results.append({
+                        'title': result.get('title', ''),
+                        'link': result.get('link', ''),
+                        'snippet': result.get('snippet', '')
+                    })
+            
+            print(f"SERP API found {len(results)} results")
+            return results[:10]
+            
+        except Exception as e:
+            print(f"Error in SERP API search: {e}")
+            # Fallback на Google поиск
+            return self._google_search(query)
+    
     def _google_search(self, query: str) -> List[Dict]:
-        """Выполняет поиск в Google и возвращает результаты"""
+        """Выполняет поиск в Google и возвращает результаты (fallback метод)"""
         search_url = f"https://www.google.com/search?q={quote_plus(query)}&num=10"
         
         try:
@@ -62,6 +108,7 @@ class SERPService:
                         'snippet': snippet_elem.get_text() if snippet_elem else ''
                     })
             
+            print(f"Google search found {len(results)} results")
             return results[:10]
         except Exception as e:
             print(f"Error in Google search: {e}")

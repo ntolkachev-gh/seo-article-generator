@@ -8,6 +8,7 @@ from database import Base
 
 class Article(Base):
     __tablename__ = "articles"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     topic = Column(Text, nullable=False)
@@ -26,6 +27,7 @@ class Article(Base):
 
 class OpenAIUsage(Base):
     __tablename__ = "openai_usage"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     article_id = Column(UUID(as_uuid=True), ForeignKey("articles.id"), nullable=False)
