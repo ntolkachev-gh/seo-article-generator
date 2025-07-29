@@ -26,9 +26,18 @@ app = FastAPI(
 # Настройка CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=[
+        settings.FRONTEND_URL,
+        "http://localhost:3000",
+        "https://localhost:3000",
+        "https://seo-article-generator-app-8a9fa9a58cbb.herokuapp.com",
+        "https://seo-article-generator.vercel.app",
+        "https://seo-article-generator-git-main.vercel.app",
+        "https://seo-article-generator-git-main-seo-article-generator.vercel.app",
+        "*"  # Временно разрешаем все домены для отладки
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -40,6 +49,31 @@ seo_service = SEOService()
 @app.get("/")
 async def root():
     return {"message": "SEO Article Generator API"}
+
+@app.options("/api/articles/generate")
+async def options_generate_article():
+    """Обработчик OPTIONS запросов для CORS preflight"""
+    return {"message": "OK"}
+
+@app.options("/api/articles")
+async def options_articles():
+    """Обработчик OPTIONS запросов для списка статей"""
+    return {"message": "OK"}
+
+@app.options("/api/articles/{article_id}")
+async def options_article(article_id: str):
+    """Обработчик OPTIONS запросов для отдельной статьи"""
+    return {"message": "OK"}
+
+@app.options("/api/models")
+async def options_models():
+    """Обработчик OPTIONS запросов для моделей"""
+    return {"message": "OK"}
+
+@app.options("/api/health")
+async def options_health():
+    """Обработчик OPTIONS запросов для health check"""
+    return {"message": "OK"}
 
 @app.post("/api/articles/generate", response_model=schemas.GenerationResponse)
 async def generate_article(

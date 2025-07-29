@@ -1,14 +1,58 @@
 import axios from 'axios';
 import { GenerationRequest, GenerationResponse, Article, ArticleListItem, SEORecommendations, ModelsResponse, HealthResponse } from '../types/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// Определяем URL API в зависимости от окружения
+const getApiBaseUrl = () => {
+  // Если есть переменная окружения, используем её
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // Если мы в продакшене (Heroku), используем продакшен URL
+  if (window.location.hostname.includes('herokuapp.com') || 
+      window.location.hostname.includes('vercel.app')) {
+    return 'https://seo-article-generator-app-8a9fa9a58cbb.herokuapp.com';
+  }
+  
+  // По умолчанию используем localhost
+  return 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 секунд таймаут
 });
+
+// Добавляем перехватчик для логирования запросов
+api.interceptors.request.use(
+  (config) => {
+    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    return config;
+  },
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Добавляем перехватчик для логирования ответов
+api.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
+  (error) => {
+    console.error('API Response Error:', error.response?.status, error.response?.data, error.config?.url);
+    return Promise.reject(error);
+  }
+);
 
 export const articleApi = {
   // Генерация новой статьи
