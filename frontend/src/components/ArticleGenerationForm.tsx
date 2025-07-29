@@ -16,6 +16,8 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
   const [formData, setFormData] = useState<GenerationRequest>({
     topic: '',
     thesis: '',
+    style_examples: '',
+    character_count: 5000,
     model: 'gpt-4o-mini'
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -95,8 +97,8 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.topic.trim() || !formData.thesis.trim()) {
-      setError('Пожалуйста, заполните все поля');
+    if (!formData.topic.trim() || !formData.thesis.trim() || !formData.style_examples?.trim()) {
+      setError('Пожалуйста, заполните все обязательные поля');
       return;
     }
 
@@ -111,6 +113,8 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
       setFormData({
         topic: '',
         thesis: '',
+        style_examples: '',
+        character_count: 5000,
         model: 'gpt-4o-mini'
       });
     } catch (err: any) {
@@ -148,7 +152,7 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
             </label>
             <Input
               id="topic"
-              placeholder="Например: Преимущества использования React в 2024 году"
+              placeholder="Например: Как похудеть без диет за 30 дней"
               value={formData.topic}
               onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
               disabled={isLoading}
@@ -167,6 +171,43 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
               disabled={isLoading}
               className="min-h-[120px]"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="style_examples" className="text-sm font-medium">
+              Примеры стиля письма *
+            </label>
+            <Textarea
+              id="style_examples"
+              placeholder="Вставьте примеры текстов в том стиле, в котором должна быть написана статья. Это поможет ИИ понять нужный тон и манеру изложения..."
+              value={formData.style_examples}
+              onChange={(e) => setFormData({ ...formData, style_examples: e.target.value })}
+              disabled={isLoading}
+              className="min-h-[150px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="character_count" className="text-sm font-medium">
+              Размер статьи (знаков)
+            </label>
+            <Select
+              value={formData.character_count?.toString()}
+              onValueChange={(value: string) => 
+                setFormData({ ...formData, character_count: parseInt(value) })
+              }
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3000">3 000 знаков (короткая)</SelectItem>
+                <SelectItem value="5000">5 000 знаков (средняя)</SelectItem>
+                <SelectItem value="7000">7 000 знаков (длинная)</SelectItem>
+                <SelectItem value="10000">10 000 знаков (очень длинная)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

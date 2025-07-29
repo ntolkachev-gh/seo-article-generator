@@ -1,7 +1,9 @@
 export interface GenerationRequest {
   topic: string;
   thesis: string;
-  model: string; // Изменено с union type на string для поддержки всех моделей
+  style_examples?: string;
+  character_count?: number;
+  model: string;
 }
 
 export interface OpenAIUsage {

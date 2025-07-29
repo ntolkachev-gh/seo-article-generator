@@ -60,10 +60,11 @@ class AIService:
         return service.generate_structure(topic, thesis, keywords, questions, model)
     
     def generate_article(self, topic: str, thesis: str, structure: str, 
-                        keywords: List[str], model: str = "gpt-4o-mini") -> Tuple[str, Dict]:
+                        keywords: List[str], style_examples: str = "", 
+                        character_count: int = 5000, model: str = "gpt-4o-mini") -> Tuple[str, Dict]:
         """Генерирует полный текст статьи, автоматически выбирая провайдера"""
         service = self.get_service_for_model(model)
-        return service.generate_article(topic, thesis, structure, keywords, model)
+        return service.generate_article(topic, thesis, structure, keywords, style_examples, character_count, model)
     
     def calculate_cost(self, usage_info: Dict, model: str) -> Decimal:
         """Рассчитывает стоимость использования API"""
