@@ -90,7 +90,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="px-2 sm:px-4 md:px-6 lg:px-8">
@@ -134,14 +134,14 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <main className="flex-1 px-1 sm:px-2 md:px-4 py-2 sm:py-3 md:py-4">
         {currentView === 'form' && (
-          <div className="space-y-4 sm:space-y-6 md:space-y-8">
+          <div className="space-y-2 sm:space-y-3 md:space-y-4">
             <div className="text-center">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 md:mb-4">
                 Создайте качественную SEO-статью за минуты
               </h2>
-              <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-2">
+              <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-1 sm:px-2">
                 Используйте мощь искусственного интеллекта для генерации 
                 оптимизированных статей с автоматическим анализом ключевых слов 
                 и SEO-оценкой
@@ -151,7 +151,7 @@ function App() {
             <ArticleGenerationForm onArticleGenerated={handleArticleGenerated} />
             
             {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mt-8 sm:mt-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mt-4 sm:mt-6 md:mt-8">
               <Card>
                 <CardContent className="p-4 sm:p-6 text-center">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
@@ -204,9 +204,9 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-8 sm:mt-12 md:mt-16">
-        <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm text-gray-600">
+      <footer className="bg-white border-t border-gray-200 mt-auto py-2 sm:py-3 md:py-4">
+        <div className="px-1 sm:px-2 md:px-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
             <div className="flex items-center gap-1 sm:gap-2">
               <span>Создано с</span>
               <Heart className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />

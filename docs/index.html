@@ -44,17 +44,16 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="min-h-screen flex flex-col">
-        <div class="flex-1 px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div class="flex-1 px-1 sm:px-2 md:px-4 py-2 sm:py-3 md:py-4">
         <!-- Header -->
-        <header class="text-center mb-4 sm:mb-6 md:mb-8">
-            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">SEO Article Generator</h1>
+        <header class="text-center mb-2 sm:mb-3 md:mb-4">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">SEO Article Generator</h1>
             <p class="text-sm sm:text-base text-gray-600">Генерация SEO-оптимизированных статей с помощью AI</p>
         </header>
 
         <!-- Navigation -->
-        <nav class="flex justify-center mb-4 sm:mb-6 md:mb-8">
+        <nav class="flex justify-center mb-2 sm:mb-3 md:mb-4">
             <div class="bg-white rounded-lg shadow p-1">
                 <button id="nav-generate" class="px-3 sm:px-4 py-2 rounded-md bg-blue-600 text-white font-medium text-sm sm:text-base">Генерация</button>
                 <button id="nav-history" class="px-3 sm:px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100 text-sm sm:text-base">История</button>
@@ -65,10 +64,10 @@
         <main class="flex-1">
             <!-- Generation Form -->
             <div id="generation-form" class="max-w-lg sm:max-w-xl md:max-w-2xl mx-auto">
-                <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Создать новую статью</h2>
+                <div class="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 md:mb-6">Создать новую статью</h2>
                     
-                    <form id="article-form" class="space-y-3 sm:space-y-4">
+                    <form id="article-form" class="space-y-2 sm:space-y-3 md:space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Тема статьи</label>
                             <input type="text" id="topic" required 
@@ -150,8 +149,8 @@
 
             <!-- Article View -->
             <div id="article-view" class="max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto" style="display: none;">
-                <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
+                <div class="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4 md:mb-6">
                         <h2 class="text-xl sm:text-2xl font-semibold">Сгенерированная статья</h2>
                         <button id="back-to-form" class="px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm sm:text-base">
                             Назад к форме
@@ -166,8 +165,8 @@
 
             <!-- History -->
             <div id="history-view" class="max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto" style="display: none;">
-                <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
+                <div class="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4 md:mb-6">
                         <h2 class="text-xl sm:text-2xl font-semibold">История статей</h2>
                         <div class="flex flex-col sm:flex-row gap-2">
                             <button onclick="clearLocalHistory()" class="px-3 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
@@ -186,20 +185,22 @@
             </div>
         </main>
         
-        <!-- Footer с версией -->
-        <footer class="mt-4 sm:mt-6 md:mt-8 py-3 sm:py-4 border-t border-gray-200">
-            <div class="px-2 sm:px-4">
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm text-gray-500">
-                    <div>
-                        <span>SEO Article Generator</span>
-                    </div>
-                    <div>
-                        <span id="app-version">v0.1.0</span>
-                    </div>
+        </main>
+    </div>
+    
+    <!-- Footer с версией -->
+    <footer class="mt-auto py-2 sm:py-3 border-t border-gray-200 bg-white">
+        <div class="px-1 sm:px-2 md:px-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500">
+                <div>
+                    <span>SEO Article Generator</span>
+                </div>
+                <div>
+                    <span id="app-version">v0.1.0</span>
                 </div>
             </div>
-        </footer>
-    </div>
+        </div>
+    </footer>
 
     <script>
         // Configuration
