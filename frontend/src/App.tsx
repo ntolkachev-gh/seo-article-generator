@@ -63,6 +63,28 @@ function App() {
       }
       
       console.log('Отображаем статью:', article);
+      
+      // Дополнительная проверка usage объекта
+      if (!article.usage) {
+        console.warn('Usage объект отсутствует, создаем дефолтный');
+        article.usage = {
+          id: '',
+          article_id: article.article_id || '',
+          model: article.model_used || 'unknown',
+          prompt_tokens: 0,
+          completion_tokens: 0,
+          total_tokens: 0,
+          cost_usd: '0.00',
+          created_at: article.created_at || new Date().toISOString()
+        };
+      }
+      
+      // Проверяем, что usage.model существует
+      if (!article.usage.model) {
+        console.warn('Usage.model отсутствует, устанавливаем дефолтное значение');
+        article.usage.model = article.model_used || 'unknown';
+      }
+      
       setCurrentArticle(article);
       setCurrentView('article');
     } catch (error) {

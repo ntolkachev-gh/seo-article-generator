@@ -65,6 +65,11 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
     created_at: new Date().toISOString()
   };
 
+  // Дополнительная проверка для поля model в usage
+  if (safeUsage && typeof safeUsage.model === 'undefined') {
+    safeUsage.model = article.model_used || 'unknown';
+  }
+
   // Убеждаемся, что все поля статьи безопасны
   const safeArticle = {
     ...article,
