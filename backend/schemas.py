@@ -25,6 +25,7 @@ class ArticleResponse(BaseModel):
     
     class Config:
         from_attributes = True
+        protected_namespaces = ()
 
 class ArticleListResponse(BaseModel):
     id: UUID
@@ -38,6 +39,7 @@ class ArticleListResponse(BaseModel):
     
     class Config:
         from_attributes = True
+        protected_namespaces = ()
 
 class OpenAIUsageResponse(BaseModel):
     id: UUID
@@ -71,6 +73,9 @@ class GenerationResponse(BaseModel):
     seo_score: float
     model_used: str
     usage: OpenAIUsageResponse
+    
+    class Config:
+        protected_namespaces = ()
 
 class ModelInfo(BaseModel):
     id: str

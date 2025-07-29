@@ -11,8 +11,12 @@ class OpenAIService:
         if not settings.OPENAI_API_KEY:
             raise ValueError("OPENAI_API_KEY is required for OpenAI models")
         
-        openai.api_key = settings.OPENAI_API_KEY
-        self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        try:
+            openai.api_key = settings.OPENAI_API_KEY
+            self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        except Exception as e:
+            print(f"Error initializing OpenAI client: {e}")
+            raise
     
     def get_model_config(self, model: str) -> Dict:
         """Получает конфигурацию для конкретной модели"""
