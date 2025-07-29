@@ -230,8 +230,37 @@ async def get_seo_recommendations(
 
 @app.get("/api/health")
 async def health_check():
-    """Проверка здоровья сервиса"""
-    return {"status": "healthy", "message": "Service is running"}
+    """Проверка здоровья API"""
+    try:
+        # Проверяем доступность сервисов
+        openai_available = ai_service.openai_service is not None
+        anthropic_available = ai_service.anthropic_service is not None
+        
+        return {
+            "status": "healthy",
+            "message": "Service is running",
+            "version": "2.0.0",
+            "services": {
+                "openai": openai_available,
+                "anthropic": anthropic_available,
+                "serp": True,  # SERP service is always available
+                "seo": True    # SEO service is always available
+            },
+            "available_models": len(ai_service.get_available_models())
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Service error: {str(e)}",
+            "version": "2.0.0",
+            "services": {
+                "openai": False,
+                "anthropic": False,
+                "serp": False,
+                "seo": False
+            },
+            "available_models": 0
+        }
 
 if __name__ == "__main__":
     import uvicorn
