@@ -31,6 +31,8 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
   console.log('ArticleView: article.usage:', article?.usage);
   console.log('ArticleView: article.model_used:', article?.model_used);
 
+  try {
+
   // Проверяем, что article существует
   if (!article) {
     console.error('ArticleView: article is null/undefined');
@@ -99,6 +101,12 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
 
   console.log('ArticleView: Финальный safeUsage:', safeUsage);
 
+  // Финальная проверка - если safeUsage.model все еще undefined
+  if (!safeUsage.model) {
+    console.error('ArticleView: КРИТИЧЕСКАЯ ОШИБКА - safeUsage.model is undefined!');
+    safeUsage.model = 'unknown';
+  }
+
   // Убеждаемся, что все поля статьи безопасны
   const safeArticle = {
     ...article,
@@ -113,6 +121,9 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
     model_used: article.model_used || 'unknown',
     usage: safeUsage
   };
+
+  console.log('ArticleView: Финальный safeArticle:', safeArticle);
+  console.log('ArticleView: safeArticle.usage.model:', safeArticle.usage.model);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -315,4 +326,38 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
       </Card>
     </div>
   );
+  } catch (error) {
+    console.error('ArticleView: КРИТИЧЕСКАЯ ОШИБКА В КОМПОНЕНТЕ:', error);
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onBack}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Назад
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">Ошибка отображения</h1>
+        </div>
+        <Card>
+          <CardContent className="p-8">
+            <div className="text-center text-muted-foreground">
+              <p>Произошла ошибка при отображении статьи.</p>
+              <p className="text-sm mt-2">Ошибка: {error instanceof Error ? error.message : 'Неизвестная ошибка'}</p>
+              <Button 
+                onClick={() => window.location.reload()} 
+                className="mt-4"
+                variant="outline"
+              >
+                Обновить страницу
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 }; 
