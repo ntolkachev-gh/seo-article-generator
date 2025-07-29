@@ -71,7 +71,11 @@ export const articleApi = {
 
   // Получение статьи по ID
   getArticle: async (articleId: string): Promise<GenerationResponse> => {
+    console.log('API: Запрашиваем статью с ID:', articleId);
     const response = await api.get(`/api/articles/${articleId}`);
+    console.log('API: Получен ответ от сервера:', response.data);
+    console.log('API: response.data.usage:', response.data.usage);
+    console.log('API: response.data.usage?.model:', response.data.usage?.model);
     return response.data;
   },
 

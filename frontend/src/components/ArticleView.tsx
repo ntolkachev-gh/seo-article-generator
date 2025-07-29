@@ -26,8 +26,14 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
   const [recommendations, setRecommendations] = useState<SEORecommendations | null>(null);
   const [showRecommendations, setShowRecommendations] = useState(false);
 
+  console.log('ArticleView: Получен article объект:', article);
+  console.log('ArticleView: Тип article:', typeof article);
+  console.log('ArticleView: article.usage:', article?.usage);
+  console.log('ArticleView: article.model_used:', article?.model_used);
+
   // Проверяем, что article существует
   if (!article) {
+    console.error('ArticleView: article is null/undefined');
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
@@ -53,8 +59,10 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
     );
   }
 
+  console.log('ArticleView: Создаем safeUsage...');
+  
   // Убеждаемся, что объект usage существует и все поля безопасны
-  const safeUsage = article.usage || {
+  let safeUsage = article.usage || {
     id: '',
     article_id: article.article_id || '',
     model: article.model_used || 'unknown',
@@ -65,14 +73,18 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
     created_at: new Date().toISOString()
   };
 
+  console.log('ArticleView: safeUsage после создания:', safeUsage);
+  console.log('ArticleView: safeUsage.model:', safeUsage?.model);
+
   // Дополнительная проверка для поля model в usage
   if (safeUsage && typeof safeUsage.model === 'undefined') {
+    console.warn('ArticleView: safeUsage.model is undefined, устанавливаем дефолтное значение');
     safeUsage.model = article.model_used || 'unknown';
   }
 
   // Дополнительная проверка - если safeUsage все еще undefined
   if (!safeUsage) {
-    console.error('safeUsage is undefined, creating fallback');
+    console.error('ArticleView: safeUsage is undefined, creating fallback');
     safeUsage = {
       id: '',
       article_id: article.article_id || '',
@@ -84,6 +96,8 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
       created_at: new Date().toISOString()
     };
   }
+
+  console.log('ArticleView: Финальный safeUsage:', safeUsage);
 
   // Убеждаемся, что все поля статьи безопасны
   const safeArticle = {

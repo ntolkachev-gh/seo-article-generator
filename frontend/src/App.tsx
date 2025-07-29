@@ -76,10 +76,13 @@ function App() {
       }
       
       console.log('Отображаем статью:', article);
+      console.log('App: article.usage:', article.usage);
+      console.log('App: article.usage?.model:', article.usage?.model);
+      console.log('App: article.model_used:', article.model_used);
       
       // Дополнительная проверка usage объекта
       if (!article.usage) {
-        console.warn('Usage объект отсутствует, создаем дефолтный');
+        console.warn('App: Usage объект отсутствует, создаем дефолтный');
         article.usage = {
           id: '',
           article_id: article.article_id || '',
@@ -94,9 +97,12 @@ function App() {
       
       // Проверяем, что usage.model существует
       if (!article.usage.model) {
-        console.warn('Usage.model отсутствует, устанавливаем дефолтное значение');
+        console.warn('App: Usage.model отсутствует, устанавливаем дефолтное значение');
         article.usage.model = article.model_used || 'unknown';
       }
+      
+      console.log('App: Финальный article.usage:', article.usage);
+      console.log('App: Финальный article.usage.model:', article.usage.model);
       
       setCurrentArticle(article);
       setCurrentView('article');
