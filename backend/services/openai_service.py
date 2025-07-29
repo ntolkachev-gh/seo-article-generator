@@ -8,6 +8,9 @@ from config import settings
 
 class OpenAIService:
     def __init__(self):
+        if not settings.OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY is required for OpenAI models")
+        
         openai.api_key = settings.OPENAI_API_KEY
         self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
     

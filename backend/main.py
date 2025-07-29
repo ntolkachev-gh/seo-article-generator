@@ -82,6 +82,13 @@ async def generate_article(
 ):
     """Генерирует новую SEO-статью"""
     try:
+        # Проверяем доступность модели перед началом генерации
+        if not ai_service.is_model_available(request.model):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Модель {request.model} недоступна. Проверьте настройки API ключей."
+            )
+        
         # 1. Анализ SERP
         serp_data = serp_service.analyze_topic(request.topic)
         keywords = serp_data["keywords"]
@@ -159,6 +166,18 @@ async def generate_article(
             usage=schemas.OpenAIUsageResponse.from_orm(db_usage)
         )
         
+    except ValueError as e:
+        # Специальная обработка для ошибок сервисов
+        if "API" in str(e) and "key" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Сервис AI недоступен: {str(e)}"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Ошибка валидации: {str(e)}"
+            )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
