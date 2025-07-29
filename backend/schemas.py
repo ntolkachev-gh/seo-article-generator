@@ -3,6 +3,7 @@ from typing import List, Optional
 from datetime import datetime
 from uuid import UUID
 from decimal import Decimal
+from config import settings
 
 class ArticleCreate(BaseModel):
     topic: str
@@ -56,7 +57,7 @@ class GenerationRequest(BaseModel):
     thesis: str
     style_examples: Optional[str] = ""
     character_count: Optional[int] = 5000
-    model: str = "gpt-3.5-turbo"
+    model: str = "gpt-4o-mini"  # Изменен дефолт на самую быструю модель
 
 class GenerationResponse(BaseModel):
     article_id: UUID
@@ -67,4 +68,14 @@ class GenerationResponse(BaseModel):
     article: str
     seo_score: float
     model_used: str
-    usage: OpenAIUsageResponse 
+    usage: OpenAIUsageResponse
+
+class ModelInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    category: str
+    pricing: dict
+
+class ModelsResponse(BaseModel):
+    models: List[ModelInfo] 

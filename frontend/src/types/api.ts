@@ -1,7 +1,7 @@
 export interface GenerationRequest {
   topic: string;
   thesis: string;
-  model: 'gpt-3.5-turbo' | 'gpt-4';
+  model: string; // Изменено с union type на string для поддержки всех моделей
 }
 
 export interface OpenAIUsage {
@@ -51,4 +51,20 @@ export interface SEORecommendations {
   article_id: string;
   seo_score: number;
   recommendations: string[];
+}
+
+// Новые типы для моделей
+export interface ModelInfo {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  pricing: {
+    input: number;
+    output: number;
+  };
+}
+
+export interface ModelsResponse {
+  models: ModelInfo[];
 } 

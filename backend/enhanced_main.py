@@ -33,7 +33,7 @@ except Exception as e:
 
 # Import services with error handling
 try:
-    from services.openai_service import OpenAIService
+    from services.ai_service import AIService
     from services.seo_service import SEOService
     SERVICES_AVAILABLE = True
     print("Services loaded successfully")
@@ -68,7 +68,7 @@ app.add_middleware(
 # Initialize services
 if SERVICES_AVAILABLE:
     try:
-        openai_service = OpenAIService()
+        ai_service = AIService()
         seo_service = SEOService()
         print("Services initialized successfully")
     except Exception as e:
@@ -118,6 +118,16 @@ class ArticleListResponse(BaseModel):
     model_used: str
     created_at: datetime
 
+class ModelInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    category: str
+    pricing: dict
+
+class ModelsResponse(BaseModel):
+    models: List[ModelInfo]
+
 # In-memory storage as fallback
 articles_db = []
 
@@ -138,6 +148,40 @@ async def health_check():
         "database": DATABASE_AVAILABLE,
         "services": SERVICES_AVAILABLE
     }
+
+@app.get("/api/models", response_model=ModelsResponse)
+async def get_available_models():
+    """Получить список доступных моделей с информацией о ценах"""
+    from config import settings
+    
+    models = []
+    
+    if SERVICES_AVAILABLE and ai_service:
+        # Получаем только доступные модели
+        available_models = ai_service.get_available_models()
+    else:
+        # Fallback на все модели из конфигурации
+        available_models = settings.AVAILABLE_MODELS
+    
+    for model_info in available_models:
+        model_id = model_info["id"]
+        provider = model_info.get("provider", "openai")
+        
+        # Получаем цены в зависимости от провайдера
+        if provider == "anthropic":
+            pricing = settings.ANTHROPIC_PRICING.get(model_id, {"input": 0, "output": 0})
+        else:
+            pricing = settings.OPENAI_PRICING.get(model_id, {"input": 0, "output": 0})
+        
+        models.append(ModelInfo(
+            id=model_id,
+            name=model_info["name"],
+            description=model_info["description"],
+            category=model_info["category"],
+            pricing=pricing
+        ))
+    
+    return ModelsResponse(models=models)
 
 async def generate_with_style(topic: str, thesis: str, style_examples: str, character_count: int, model: str):
     """Generate article with style examples using OpenAI"""
@@ -162,23 +206,76 @@ async def generate_with_style(topic: str, thesis: str, style_examples: str, char
         keywords = ["SEO", "оптимизация", "контент", topic.lower()]
         
         # Generate structure with style
-        structure_prompt = f"""Создай подробную структуру статьи на тему "{topic}" в формате markdown.
+        if SERVICES_AVAILABLE and ai_service:
+            try:
+                structure, structure_usage = ai_service.generate_structure(
+                    topic, thesis, keywords, [], model
+                )
+            except Exception as e:
+                print(f"Error generating structure: {e}")
+                structure = f"""# {topic}
 
-Основные тезисы:
-{thesis}
+## Введение
+Вводная часть, которая заинтересует читателя и раскроет важность темы.
 
-Ключевые слова: {', '.join(keywords)}
+## Основные аспекты
 
-{style_prompt}
+### Теоретические основы
+{thesis[:200]}...
 
-Структура должна включать:
-- Заголовок H1
-- Введение
-- 3-4 основных раздела с подразделами
-- Заключение
-- Список ключевых моментов
+### Практическое применение
+Конкретные примеры и рекомендации.
 
-Формат ответа: только markdown структура без дополнительных комментариев."""
+### Современные тенденции
+Актуальные подходы и новые методы.
+
+## Детальный анализ
+
+### Преимущества и недостатки
+Объективная оценка различных подходов.
+
+### Рекомендации экспертов
+Советы от профессионалов в области.
+
+## Заключение
+Подведение итогов и практические выводы.
+
+## Ключевые моменты
+- Основные принципы
+- Практические рекомендации
+- Перспективы развития"""
+        else:
+            structure = f"""# {topic}
+
+## Введение
+Вводная часть, которая заинтересует читателя и раскроет важность темы.
+
+## Основные аспекты
+
+### Теоретические основы
+{thesis[:200]}...
+
+### Практическое применение
+Конкретные примеры и рекомендации.
+
+### Современные тенденции
+Актуальные подходы и новые методы.
+
+## Детальный анализ
+
+### Преимущества и недостатки
+Объективная оценка различных подходов.
+
+### Рекомендации экспертов
+Советы от профессионалов в области.
+
+## Заключение
+Подведение итогов и практические выводы.
+
+## Ключевые моменты
+- Основные принципы
+- Практические рекомендации
+- Перспективы развития"""
 
         # For now, create enhanced mock structure
         structure = f"""# {topic}
@@ -214,24 +311,64 @@ async def generate_with_style(topic: str, thesis: str, style_examples: str, char
 - Перспективы развития"""
 
         # Generate article with style
-        article_prompt = f"""Напиши подробную статью по следующей структуре:
+        if SERVICES_AVAILABLE and ai_service:
+            try:
+                article_text, article_usage = ai_service.generate_article(
+                    topic, thesis, structure, keywords, model
+                )
+            except Exception as e:
+                print(f"Error generating article: {e}")
+                article_text = f"""# {topic}
 
-{structure}
+## Введение
 
-Тема: {topic}
-Тезисы: {thesis}
-Ключевые слова: {', '.join(keywords)}
+{topic} представляет собой важную область, которая требует глубокого понимания и профессионального подхода. В современном мире эта тема становится все более актуальной, и понимание ее основ критически важно для успешной деятельности.
 
-{style_prompt}
+## Основные аспекты
 
-Требования:
-- Объем: примерно {character_count} знаков
-- Используй ключевые слова естественно
-- Добавь конкретные примеры
-- Сделай текст информативным и полезным
-- Соблюдай SEO-требования
+### Теоретические основы
 
-Формат ответа: только текст статьи в markdown без дополнительных комментариев."""
+{thesis}
+
+Фундаментальные принципы в этой области основываются на многолетних исследованиях и практическом опыте специалистов. Важно понимать, что теоретическая база служит основой для всех практических применений.
+
+### Практическое применение
+
+Рассмотрим конкретные примеры использования знаний в данной области. Практический опыт показывает, что правильный подход к решению задач может значительно улучшить результаты.
+
+### Современные тенденции
+
+В настоящее время наблюдается активное развитие новых методов и подходов. Понимание современных тенденций позволяет оставаться в курсе последних достижений.
+
+## Заключение
+
+Подводя итоги, можно сказать, что {topic} является важной и актуальной темой, требующей постоянного изучения и практического применения."""
+        else:
+            article_text = f"""# {topic}
+
+## Введение
+
+{topic} представляет собой важную область, которая требует глубокого понимания и профессионального подхода. В современном мире эта тема становится все более актуальной, и понимание ее основ критически важно для успешной деятельности.
+
+## Основные аспекты
+
+### Теоретические основы
+
+{thesis}
+
+Фундаментальные принципы в этой области основываются на многолетних исследованиях и практическом опыте специалистов. Важно понимать, что теоретическая база служит основой для всех практических применений.
+
+### Практическое применение
+
+Рассмотрим конкретные примеры использования знаний в данной области. Практический опыт показывает, что правильный подход к решению задач может значительно улучшить результаты.
+
+### Современные тенденции
+
+В настоящее время наблюдается активное развитие новых методов и подходов. Понимание современных тенденций позволяет оставаться в курсе последних достижений.
+
+## Заключение
+
+Подводя итоги, можно сказать, что {topic} является важной и актуальной темой, требующей постоянного изучения и практического применения."""
 
         # Enhanced mock article with style consideration
         article_text = f"""# {topic}
@@ -384,13 +521,27 @@ async def generate_mock_article(topic: str, thesis: str, style_examples: str, ch
 - Постоянное развитие и совершенствование
 
 Надеемся, что данная статья была полезной и информативной."""
-    
-    return {
-        'keywords': keywords,
-        'structure': structure,
-        'article': article_text,
-        'seo_score': 8.5
-    }
+        
+        # Calculate usage info
+        if SERVICES_AVAILABLE and ai_service and 'structure_usage' in locals() and 'article_usage' in locals():
+            total_usage = {
+                "prompt_tokens": structure_usage["prompt_tokens"] + article_usage["prompt_tokens"],
+                "completion_tokens": structure_usage["completion_tokens"] + article_usage["completion_tokens"],
+                "total_tokens": structure_usage["total_tokens"] + article_usage["total_tokens"]
+            }
+            cost = ai_service.calculate_cost(total_usage, model)
+        else:
+            total_usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            cost = 0.0
+        
+        return {
+            'keywords': keywords,
+            'structure': structure,
+            'article': article_text,
+            'seo_score': 8.5,
+            'usage': total_usage,
+            'cost': cost
+        }
 
 @app.post("/api/articles/generate", response_model=GenerationResponse)
 async def generate_article(

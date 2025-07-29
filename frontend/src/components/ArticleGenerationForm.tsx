@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Loader2, Sparkles } from 'lucide-react';
-import { GenerationRequest, GenerationResponse } from '../types/api';
+import { Loader2, Sparkles, Zap, Star, Crown } from 'lucide-react';
+import { GenerationRequest, GenerationResponse, ModelInfo } from '../types/api';
 import { articleApi } from '../services/api';
 
 interface ArticleGenerationFormProps {
@@ -16,10 +16,68 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
   const [formData, setFormData] = useState<GenerationRequest>({
     topic: '',
     thesis: '',
-    model: 'gpt-3.5-turbo'
+    model: 'gpt-4o-mini'
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+
+  useEffect(() => {
+    loadModels();
+  }, []);
+
+  const loadModels = async () => {
+    try {
+      const response = await articleApi.getAvailableModels();
+      setModels(response.models);
+    } catch (err) {
+      console.error('Failed to load models:', err);
+      // Fallback to basic models
+      setModels([
+        { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Самый быстрый и дешевый', category: 'fast', pricing: { input: 0.00015, output: 0.0006 } },
+        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Быстрый и экономичный', category: 'fast', pricing: { input: 0.0015, output: 0.002 } },
+        { id: 'gpt-4o', name: 'GPT-4o', description: 'Оптимальное качество и скорость', category: 'balanced', pricing: { input: 0.005, output: 0.015 } },
+        { id: 'gpt-4', name: 'GPT-4', description: 'Максимальное качество', category: 'quality', pricing: { input: 0.03, output: 0.06 } },
+      ]);
+    } finally {
+      setModelsLoading(false);
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'fast':
+        return <Zap className="h-4 w-4 text-green-500" />;
+      case 'balanced':
+        return <Sparkles className="h-4 w-4 text-blue-500" />;
+      case 'quality':
+        return <Star className="h-4 w-4 text-yellow-500" />;
+      case 'premium':
+        return <Crown className="h-4 w-4 text-purple-500" />;
+      default:
+        return <Sparkles className="h-4 w-4" />;
+    }
+  };
+
+  const getCategoryName = (category: string) => {
+    switch (category) {
+      case 'fast':
+        return 'Быстрые';
+      case 'balanced':
+        return 'Сбалансированные';
+      case 'quality':
+        return 'Высокое качество';
+      case 'premium':
+        return 'Премиум';
+      default:
+        return category;
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return `$${(price * 1000).toFixed(2)}/1K токенов`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +98,7 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
       setFormData({
         topic: '',
         thesis: '',
-        model: 'gpt-3.5-turbo'
+        model: 'gpt-4o-mini'
       });
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Произошла ошибка при генерации статьи');
@@ -48,6 +106,15 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
       setIsLoading(false);
     }
   };
+
+  // Группируем модели по категориям
+  const groupedModels = models.reduce((acc, model) => {
+    if (!acc[model.category]) {
+      acc[model.category] = [];
+    }
+    acc[model.category].push(model);
+    return acc;
+  }, {} as Record<string, ModelInfo[]>);
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -91,27 +158,46 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
 
           <div className="space-y-2">
             <label htmlFor="model" className="text-sm font-medium">
-              Модель OpenAI
+              Модель ИИ
             </label>
-            <Select
-              value={formData.model}
-              onValueChange={(value: 'gpt-3.5-turbo' | 'gpt-4') => 
-                setFormData({ ...formData, model: value })
-              }
-              disabled={isLoading}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gpt-3.5-turbo">
-                  GPT-3.5 Turbo (быстрее, дешевле)
-                </SelectItem>
-                <SelectItem value="gpt-4">
-                  GPT-4 (качественнее, дороже)
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            {modelsLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Загрузка моделей...
+              </div>
+            ) : (
+              <Select
+                value={formData.model}
+                onValueChange={(value: string) => 
+                  setFormData({ ...formData, model: value })
+                }
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(groupedModels).map(([category, categoryModels]) => (
+                    <div key={category}>
+                      <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                        {getCategoryIcon(category)}
+                        {getCategoryName(category)}
+                      </div>
+                      {categoryModels.map((model) => (
+                        <SelectItem key={model.id} value={model.id}>
+                          <div className="flex flex-col">
+                            <div className="font-medium">{model.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {model.description} • {formatPrice(model.pricing.input)}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {error && (

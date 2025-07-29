@@ -1,4 +1,4 @@
-import openai
+import anthropic
 from typing import Dict, List, Tuple
 from decimal import Decimal
 import sys
@@ -6,45 +6,38 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import settings
 
-class OpenAIService:
+class AnthropicService:
     def __init__(self):
-        openai.api_key = settings.OPENAI_API_KEY
-        self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        if not settings.ANTHROPIC_API_KEY:
+            raise ValueError("ANTHROPIC_API_KEY is required for Claude models")
+        
+        self.client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
     
     def get_model_config(self, model: str) -> Dict:
-        """Получает конфигурацию для конкретной модели"""
-        # Базовые настройки для всех моделей
+        """Получает конфигурацию для конкретной модели Claude"""
+        # Базовые настройки для всех моделей Claude
         base_config = {
             "max_tokens": 1500,
             "temperature": 0.7
         }
         
-        # Специфичные настройки для разных моделей
+        # Специфичные настройки для разных моделей Claude
         model_configs = {
-            # GPT-3.5 Models
-            "gpt-3.5-turbo": {"max_tokens": 1500, "temperature": 0.7},
-            "gpt-3.5-turbo-16k": {"max_tokens": 3000, "temperature": 0.7},
-            "gpt-3.5-turbo-instruct": {"max_tokens": 1500, "temperature": 0.7},
+            # Claude 3 Models
+            "claude-3-haiku-20240307": {"max_tokens": 1500, "temperature": 0.7},
+            "claude-3-sonnet-20240229": {"max_tokens": 4000, "temperature": 0.7},
+            "claude-3-opus-20240229": {"max_tokens": 4000, "temperature": 0.7},
             
-            # GPT-4 Models
-            "gpt-4": {"max_tokens": 4000, "temperature": 0.7},
-            "gpt-4-32k": {"max_tokens": 8000, "temperature": 0.7},
-            "gpt-4-turbo": {"max_tokens": 4000, "temperature": 0.7},
-            "gpt-4-turbo-preview": {"max_tokens": 4000, "temperature": 0.7},
-            
-            # GPT-4o Models
-            "gpt-4o": {"max_tokens": 4000, "temperature": 0.7},
-            "gpt-4o-mini": {"max_tokens": 2000, "temperature": 0.7},
-            
-            # Legacy Models
-            "text-davinci-003": {"max_tokens": 1500, "temperature": 0.7},
+            # Claude 3.5 Models (Latest)
+            "claude-3-5-sonnet-20241022": {"max_tokens": 4000, "temperature": 0.7},
+            "claude-3-5-haiku-20241022": {"max_tokens": 2000, "temperature": 0.7},
         }
         
         return model_configs.get(model, base_config)
     
     def generate_structure(self, topic: str, thesis: str, keywords: List[str], 
-                          questions: List[str], model: str = "gpt-4o-mini") -> Tuple[str, Dict]:
-        """Генерирует структуру статьи"""
+                          questions: List[str], model: str = "claude-3-5-sonnet-20241022") -> Tuple[str, Dict]:
+        """Генерирует структуру статьи с помощью Claude"""
         
         keywords_str = ", ".join(keywords[:10])
         questions_str = "\n".join(questions[:5])
@@ -72,27 +65,29 @@ class OpenAIService:
         
         try:
             config = self.get_model_config(model)
-            response = self.client.chat.completions.create(
+            response = self.client.messages.create(
                 model=model,
-                messages=[
-                    {"role": "system", "content": "Ты эксперт по SEO и созданию структур статей. Создавай подробные, логичные структуры статей в markdown формате."},
-                    {"role": "user", "content": prompt}
-                ],
                 max_tokens=config["max_tokens"],
-                temperature=config["temperature"]
+                temperature=config["temperature"],
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
             )
             
-            structure = response.choices[0].message.content
+            structure = response.content[0].text
             usage_info = {
-                "prompt_tokens": response.usage.prompt_tokens,
-                "completion_tokens": response.usage.completion_tokens,
-                "total_tokens": response.usage.total_tokens
+                "prompt_tokens": response.usage.input_tokens,
+                "completion_tokens": response.usage.output_tokens,
+                "total_tokens": response.usage.input_tokens + response.usage.output_tokens
             }
             
             return structure, usage_info
             
         except Exception as e:
-            print(f"Error generating structure: {e}")
+            print(f"Error generating structure with Claude: {e}")
             # Возвращаем базовую структуру
             basic_structure = f"""# {topic}
 
@@ -114,8 +109,8 @@ class OpenAIService:
             return basic_structure, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
     
     def generate_article(self, topic: str, thesis: str, structure: str, 
-                        keywords: List[str], model: str = "gpt-4o-mini") -> Tuple[str, Dict]:
-        """Генерирует полный текст статьи по структуре"""
+                        keywords: List[str], model: str = "claude-3-5-sonnet-20241022") -> Tuple[str, Dict]:
+        """Генерирует полный текст статьи по структуре с помощью Claude"""
         
         keywords_str = ", ".join(keywords[:10])
         
@@ -148,27 +143,29 @@ class OpenAIService:
             # Для генерации статьи используем больше токенов
             article_max_tokens = min(config["max_tokens"] * 2, 8000)
             
-            response = self.client.chat.completions.create(
+            response = self.client.messages.create(
                 model=model,
-                messages=[
-                    {"role": "system", "content": "Ты эксперт-копирайтер, специализирующийся на создании качественных SEO-статей. Пишешь информативно, экспертно, с хорошей структурой и естественным включением ключевых слов."},
-                    {"role": "user", "content": prompt}
-                ],
                 max_tokens=article_max_tokens,
-                temperature=config["temperature"]
+                temperature=config["temperature"],
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
             )
             
-            article = response.choices[0].message.content
+            article = response.content[0].text
             usage_info = {
-                "prompt_tokens": response.usage.prompt_tokens,
-                "completion_tokens": response.usage.completion_tokens,
-                "total_tokens": response.usage.total_tokens
+                "prompt_tokens": response.usage.input_tokens,
+                "completion_tokens": response.usage.output_tokens,
+                "total_tokens": response.usage.input_tokens + response.usage.output_tokens
             }
             
             return article, usage_info
             
         except Exception as e:
-            print(f"Error generating article: {e}")
+            print(f"Error generating article with Claude: {e}")
             # Возвращаем базовую статью
             basic_article = f"""# {topic}
 
@@ -195,8 +192,8 @@ class OpenAIService:
             return basic_article, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
     
     def calculate_cost(self, usage_info: Dict, model: str) -> Decimal:
-        """Рассчитывает стоимость использования OpenAI API"""
-        pricing = settings.OPENAI_PRICING.get(model, settings.OPENAI_PRICING["gpt-4o-mini"])
+        """Рассчитывает стоимость использования Anthropic API"""
+        pricing = settings.ANTHROPIC_PRICING.get(model, settings.ANTHROPIC_PRICING["claude-3-5-sonnet-20241022"])
         
         input_cost = (usage_info["prompt_tokens"] / 1000) * pricing["input"]
         output_cost = (usage_info["completion_tokens"] / 1000) * pricing["output"]

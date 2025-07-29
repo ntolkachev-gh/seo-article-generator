@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { GenerationRequest, GenerationResponse, Article, ArticleListItem, SEORecommendations } from '../types/api';
+import { GenerationRequest, GenerationResponse, Article, ArticleListItem, SEORecommendations, ModelsResponse } from '../types/api';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
@@ -39,6 +39,12 @@ export const articleApi = {
   // Получение SEO рекомендаций
   getSEORecommendations: async (articleId: string): Promise<SEORecommendations> => {
     const response = await api.get(`/api/articles/${articleId}/seo-recommendations`);
+    return response.data;
+  },
+
+  // Получение списка доступных моделей
+  getAvailableModels: async (): Promise<ModelsResponse> => {
+    const response = await api.get('/api/models');
     return response.data;
   },
 
