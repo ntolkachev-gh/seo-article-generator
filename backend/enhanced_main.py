@@ -156,12 +156,9 @@ async def get_available_models():
     
     models = []
     
-    if SERVICES_AVAILABLE and ai_service:
-        # Получаем только доступные модели
-        available_models = ai_service.get_available_models()
-    else:
-        # Fallback на все модели из конфигурации
-        available_models = settings.AVAILABLE_MODELS
+    # Всегда показываем все модели из конфигурации
+    # Если сервисы недоступны, пользователь получит ошибку при попытке использования
+    available_models = settings.AVAILABLE_MODELS
     
     for model_info in available_models:
         model_id = model_info["id"]
