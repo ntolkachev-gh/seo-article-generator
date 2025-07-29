@@ -9,7 +9,8 @@ import {
   Star, 
   Calendar,
   Zap,
-  RefreshCw
+  RefreshCw,
+  FileText
 } from 'lucide-react';
 import { ArticleListItem } from '../types/api';
 import { articleApi } from '../services/api';
@@ -31,7 +32,8 @@ export const ArticleHistory: React.FC<ArticleHistoryProps> = ({ onViewArticle })
       const data = await articleApi.getArticles();
       setArticles(data);
     } catch (err: any) {
-      setError('Не удалось загрузить статьи');
+      console.error('Error fetching articles:', err);
+      setError('Не удалось загрузить статьи. Проверьте подключение к серверу.');
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +46,7 @@ export const ArticleHistory: React.FC<ArticleHistoryProps> = ({ onViewArticle })
   const handleDeleteArticle = async (articleId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (!window.confirm('Вы уверены, что хотите удалить эту статью?')) {
+    if (!window.confirm('Вы уверены, что хотите удалить эту статью? Это действие нельзя отменить.')) {
       return;
     }
 
@@ -52,30 +54,40 @@ export const ArticleHistory: React.FC<ArticleHistoryProps> = ({ onViewArticle })
       await articleApi.deleteArticle(articleId);
       setArticles(articles.filter(article => article.id !== articleId));
     } catch (err: any) {
-      alert('Не удалось удалить статью');
+      console.error('Error deleting article:', err);
+      alert('Не удалось удалить статью. Попробуйте еще раз.');
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      return new Date(dateString).toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Дата неизвестна';
+    }
   };
 
   const getSEOScoreColor = (score: number) => {
-    if (score >= 8) return 'text-green-600 bg-green-100';
-    if (score >= 6) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
+    if (score >= 8) return 'text-green-600 bg-green-100 border-green-200';
+    if (score >= 6) return 'text-yellow-600 bg-yellow-100 border-yellow-200';
+    return 'text-red-600 bg-red-100 border-red-200';
   };
 
   const getSEOScoreText = (score: number) => {
     if (score >= 8) return 'Отличный';
     if (score >= 6) return 'Хороший';
-    return 'Плохой';
+    return 'Требует доработки';
+  };
+
+  const truncateText = (text: string, maxLength: number = 100) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   };
 
   if (isLoading) {
@@ -113,6 +125,11 @@ export const ArticleHistory: React.FC<ArticleHistoryProps> = ({ onViewArticle })
         <div className="flex items-center gap-2">
           <History className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">История статей</h1>
+          {articles.length > 0 && (
+            <Badge variant="secondary" className="ml-2">
+              {articles.length} {articles.length === 1 ? 'статья' : articles.length < 5 ? 'статьи' : 'статей'}
+            </Badge>
+          )}
         </div>
         <Button onClick={fetchArticles} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -124,7 +141,7 @@ export const ArticleHistory: React.FC<ArticleHistoryProps> = ({ onViewArticle })
         <Card>
           <CardContent className="p-8">
             <div className="text-center text-muted-foreground">
-              <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg mb-2">Пока нет сгенерированных статей</p>
               <p>Создайте свою первую SEO-статью, чтобы увидеть её здесь</p>
             </div>
@@ -135,15 +152,21 @@ export const ArticleHistory: React.FC<ArticleHistoryProps> = ({ onViewArticle })
           {articles.map((article) => (
             <Card 
               key={article.id} 
-              className="hover:shadow-md transition-shadow cursor-pointer"
+              className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-primary/20"
               onClick={() => onViewArticle(article.id)}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
                       {article.topic}
                     </h3>
+                    
+                    {article.thesis && (
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        {truncateText(article.thesis, 150)}
+                      </p>
+                    )}
                     
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                       <div className="flex items-center gap-1">
@@ -155,12 +178,19 @@ export const ArticleHistory: React.FC<ArticleHistoryProps> = ({ onViewArticle })
                         <Zap className="h-4 w-4" />
                         {article.model_used}
                       </div>
+
+                      {article.character_count && (
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4" />
+                          {article.character_count.toLocaleString()} знаков
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
                       <Star className="h-4 w-4 text-primary" />
                       <span className="text-sm font-medium">SEO-оценка:</span>
-                      <Badge className={getSEOScoreColor(article.seo_score)}>
+                      <Badge className={`${getSEOScoreColor(article.seo_score)} border`}>
                         {article.seo_score.toFixed(1)} - {getSEOScoreText(article.seo_score)}
                       </Badge>
                     </div>

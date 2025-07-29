@@ -21,6 +21,8 @@ export interface GenerationResponse {
   article_id: string;
   topic: string;
   thesis: string;
+  style_examples?: string;
+  character_count?: number;
   keywords: string[];
   structure: string;
   article: string;
@@ -33,6 +35,8 @@ export interface Article {
   id: string;
   topic: string;
   thesis: string;
+  style_examples?: string;
+  character_count?: number;
   keywords: string[];
   structure: string;
   article: string;
@@ -44,6 +48,9 @@ export interface Article {
 export interface ArticleListItem {
   id: string;
   topic: string;
+  thesis: string;
+  style_examples?: string;
+  character_count?: number;
   seo_score: number;
   model_used: string;
   created_at: string;

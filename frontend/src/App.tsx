@@ -53,6 +53,8 @@ function App() {
         article_id: article.id,
         topic: article.topic,
         thesis: article.thesis,
+        style_examples: article.style_examples,
+        character_count: article.character_count,
         keywords: article.keywords,
         structure: article.structure,
         article: article.article,
