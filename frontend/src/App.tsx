@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArticleGenerationForm } from './components/ArticleGenerationForm';
 import { ArticleView } from './components/ArticleView';
 import { ArticleHistory } from './components/ArticleHistory';
@@ -11,7 +11,7 @@ import {
   Github,
   Heart
 } from 'lucide-react';
-import { GenerationResponse, Article } from './types/api';
+import { GenerationResponse, Article, HealthResponse } from './types/api';
 import { articleApi } from './services/api';
 import './index.css';
 
@@ -21,6 +21,24 @@ function App() {
   const [currentView, setCurrentView] = useState<ViewMode>('form');
   const [currentArticle, setCurrentArticle] = useState<GenerationResponse | null>(null);
   const [viewingArticleId, setViewingArticleId] = useState<string | null>(null);
+
+  // Load app version on component mount
+  useEffect(() => {
+    const loadVersion = async () => {
+      try {
+        const healthData: HealthResponse = await articleApi.healthCheck();
+        const versionElement = document.getElementById('app-version');
+        if (versionElement) {
+          versionElement.textContent = `v${healthData.version}`;
+        }
+      } catch (error) {
+        console.error('Failed to load version:', error);
+        // Keep default version
+      }
+    };
+
+    loadVersion();
+  }, []);
 
   const handleArticleGenerated = (article: GenerationResponse) => {
     setCurrentArticle(article);
@@ -187,10 +205,15 @@ function App() {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-            <span>Создано с</span>
-            <Heart className="h-4 w-4 text-red-500" />
-            <span>используя FastAPI и React</span>
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <span>Создано с</span>
+              <Heart className="h-4 w-4 text-red-500" />
+              <span>используя FastAPI и React</span>
+            </div>
+            <div>
+              <span id="app-version">v0.1.0</span>
+            </div>
           </div>
         </div>
       </footer>

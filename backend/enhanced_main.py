@@ -142,9 +142,17 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
+    # Читаем версию из файла
+    try:
+        with open("VERSION", "r") as f:
+            version = f.read().strip()
+    except:
+        version = "0.1.0"  # Fallback версия
+    
     return {
         "status": "healthy",
         "message": "Service is running",
+        "version": version,
         "database": DATABASE_AVAILABLE,
         "services": SERVICES_AVAILABLE
     }

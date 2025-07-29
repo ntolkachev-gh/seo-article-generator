@@ -67,4 +67,12 @@ export interface ModelInfo {
 
 export interface ModelsResponse {
   models: ModelInfo[];
+}
+
+export interface HealthResponse {
+  status: string;
+  message: string;
+  version: string;
+  database: boolean;
+  services: boolean;
 } 

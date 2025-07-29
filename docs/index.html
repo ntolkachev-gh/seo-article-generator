@@ -184,6 +184,20 @@
                 </div>
             </div>
         </main>
+        
+        <!-- Footer с версией -->
+        <footer class="mt-8 py-4 border-t border-gray-200">
+            <div class="max-w-4xl mx-auto px-4">
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                    <div>
+                        <span>SEO Article Generator</span>
+                    </div>
+                    <div>
+                        <span id="app-version">v0.1.0</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script>
@@ -622,6 +636,21 @@
 
         // Load models when page loads
         loadModels();
+
+        // Load app version from API
+        async function loadVersion() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/api/health`);
+                const version = response.data.version || '0.1.0';
+                document.getElementById('app-version').textContent = `v${version}`;
+            } catch (error) {
+                console.error('Failed to load version from API:', error);
+                // Keep default version
+            }
+        }
+
+        // Load version when page loads
+        loadVersion();
     </script>
 </body>
 </html> 

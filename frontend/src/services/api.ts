@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { GenerationRequest, GenerationResponse, Article, ArticleListItem, SEORecommendations, ModelsResponse } from '../types/api';
+import { GenerationRequest, GenerationResponse, Article, ArticleListItem, SEORecommendations, ModelsResponse, HealthResponse } from '../types/api';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
@@ -49,7 +49,7 @@ export const articleApi = {
   },
 
   // Проверка здоровья API
-  healthCheck: async (): Promise<{ status: string; message: string }> => {
+  healthCheck: async (): Promise<HealthResponse> => {
     const response = await api.get('/api/health');
     return response.data;
   }
