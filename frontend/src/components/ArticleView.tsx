@@ -26,6 +26,18 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
   const [recommendations, setRecommendations] = useState<SEORecommendations | null>(null);
   const [showRecommendations, setShowRecommendations] = useState(false);
 
+  // Убеждаемся, что объект usage существует
+  const safeUsage = article.usage || {
+    id: '',
+    article_id: article.article_id,
+    model: article.model_used,
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    total_tokens: 0,
+    cost_usd: '0.00',
+    created_at: new Date().toISOString()
+  };
+
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
@@ -114,7 +126,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
               <DollarSign className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Стоимость</p>
-                <p className="text-lg font-semibold">${article.usage.cost_usd}</p>
+                <p className="text-lg font-semibold">${safeUsage.cost_usd}</p>
               </div>
             </div>
           </CardContent>
@@ -126,7 +138,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
               <FileText className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Токены</p>
-                <p className="text-lg font-semibold">{article.usage.total_tokens}</p>
+                <p className="text-lg font-semibold">{safeUsage.total_tokens}</p>
               </div>
             </div>
           </CardContent>

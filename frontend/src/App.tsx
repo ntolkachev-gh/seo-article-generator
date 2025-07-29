@@ -48,9 +48,10 @@ function App() {
   const handleViewHistoryArticle = async (articleId: string) => {
     try {
       const article = await articleApi.getArticle(articleId);
+      
       // Преобразуем Article в GenerationResponse для совместимости
       const generationResponse: GenerationResponse = {
-        article_id: article.id,
+        article_id: article.id, // Теперь это уже string
         topic: article.topic,
         thesis: article.thesis,
         style_examples: article.style_examples,
@@ -62,13 +63,13 @@ function App() {
         model_used: article.model_used,
         usage: {
           id: '',
-          article_id: article.id,
+          article_id: article.id, // Теперь это уже string
           model: article.model_used,
           prompt_tokens: 0,
           completion_tokens: 0,
           total_tokens: 0,
           cost_usd: '0.00',
-          created_at: article.created_at
+          created_at: article.created_at // Теперь это уже string
         }
       };
       setCurrentArticle(generationResponse);

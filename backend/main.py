@@ -225,7 +225,7 @@ async def generate_article(
         logger.info("🎉 Этап 7: Формирование финального ответа...")
         try:
             response = schemas.GenerationResponse(
-                article_id=db_article.id,
+                article_id=str(db_article.id),
                 topic=db_article.topic,
                 thesis=db_article.thesis,
                 style_examples=getattr(db_article, 'style_examples', ''),  # Добавлено
@@ -271,7 +271,7 @@ async def get_articles(
 ):
     """Получает список всех статей"""
     articles = crud.get_articles(db, skip=skip, limit=limit)
-    return articles
+    return [schemas.ArticleListResponse.from_orm(article) for article in articles]
 
 @app.get("/api/articles/{article_id}", response_model=schemas.ArticleResponse)
 async def get_article(
@@ -285,7 +285,7 @@ async def get_article(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Статья не найдена"
         )
-    return article
+    return schemas.ArticleResponse.from_orm(article)
 
 @app.delete("/api/articles/{article_id}")
 async def delete_article(
@@ -321,7 +321,7 @@ async def get_seo_recommendations(
     )
     
     return {
-        "article_id": article_id,
+        "article_id": str(article_id),
         "seo_score": article.seo_score,
         "recommendations": recommendations
     }
