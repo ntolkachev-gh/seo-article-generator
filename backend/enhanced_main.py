@@ -537,8 +537,8 @@ async def generate_mock_article(topic: str, thesis: str, style_examples: str, ch
 - Постоянное развитие и совершенствование
 
 Надеемся, что данная статья была полезной и информативной."""
-        
-        return {
+
+    return {
             'keywords': keywords,
             'structure': structure,
             'article': article_text,
