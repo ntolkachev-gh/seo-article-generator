@@ -352,14 +352,16 @@
                     </div>
                 </div>
                 
+                ${article.usage ? `
                 <div class="mb-6">
                     <h4 class="text-lg font-semibold mb-2">Использование API:</h4>
                     <div class="bg-gray-50 p-4 rounded-md">
-                        <p><strong>Модель:</strong> ${article.openai_usage.model}</p>
-                        <p><strong>Токены:</strong> ${article.openai_usage.total_tokens}</p>
-                        <p><strong>Стоимость:</strong> $${article.openai_usage.cost_usd}</p>
+                        <p><strong>Модель:</strong> ${article.usage.model || article.model_used || 'неизвестно'}</p>
+                        <p><strong>Токены:</strong> ${article.usage.total_tokens || 0}</p>
+                        <p><strong>Стоимость:</strong> $${article.usage.cost_usd || '0.00'}</p>
                     </div>
                 </div>
+                ` : ''}
             `;
             
             articleContent.innerHTML = content;
@@ -489,29 +491,31 @@
                     </div>
                 </div>
                 
+                ${article.usage ? `
                 <div class="mb-6">
                     <h4 class="text-lg font-semibold mb-2">Использование OpenAI:</h4>
                     <div class="bg-yellow-50 p-4 rounded-md">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div>
                                 <span class="font-medium">Модель:</span><br>
-                                <span class="text-gray-600">${article.openai_usage.model}</span>
+                                <span class="text-gray-600">${article.usage.model || article.model_used || 'неизвестно'}</span>
                             </div>
                             <div>
                                 <span class="font-medium">Токены запроса:</span><br>
-                                <span class="text-gray-600">${article.openai_usage.prompt_tokens}</span>
+                                <span class="text-gray-600">${article.usage.prompt_tokens || 0}</span>
                             </div>
                             <div>
                                 <span class="font-medium">Токены ответа:</span><br>
-                                <span class="text-gray-600">${article.openai_usage.completion_tokens}</span>
+                                <span class="text-gray-600">${article.usage.completion_tokens || 0}</span>
                             </div>
                             <div>
                                 <span class="font-medium">Стоимость:</span><br>
-                                <span class="text-gray-600">$${article.openai_usage.cost_usd}</span>
+                                <span class="text-gray-600">$${article.usage.cost_usd || '0.00'}</span>
                             </div>
                         </div>
                     </div>
                 </div>
+                ` : ''}
             `;
         }
 

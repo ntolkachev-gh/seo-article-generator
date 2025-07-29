@@ -95,7 +95,7 @@ class OpenAIUsageResponse(BaseModel):
     created_at: datetime
 
 class GenerationResponse(BaseModel):
-    id: str
+    article_id: str
     topic: str
     thesis: str
     style_examples: Optional[str] = ""
@@ -105,8 +105,7 @@ class GenerationResponse(BaseModel):
     article: str
     seo_score: float
     model_used: str
-    created_at: datetime
-    openai_usage: OpenAIUsageResponse
+    usage: OpenAIUsageResponse
 
 class ArticleListResponse(BaseModel):
     id: str
@@ -634,7 +633,7 @@ async def generate_article(
         )
         
         return GenerationResponse(
-            id=article_data['id'],
+            article_id=article_data['id'],
             topic=article_data['topic'],
             thesis=article_data['thesis'],
             style_examples=article_data['style_examples'],
@@ -644,8 +643,7 @@ async def generate_article(
             article=article_data['article'],
             seo_score=article_data['seo_score'],
             model_used=article_data['model_used'],
-            created_at=article_data['created_at'],
-            openai_usage=usage
+            usage=usage
         )
         
     except Exception as e:
@@ -717,7 +715,7 @@ async def get_article(
                 )
                 
                 return GenerationResponse(
-                    id=str(article.id),
+                    article_id=str(article.id),
                     topic=article.topic,
                     thesis=article.thesis,
                     style_examples=getattr(article, 'style_examples', ''),
@@ -727,8 +725,7 @@ async def get_article(
                     article=article.article,
                     seo_score=article.seo_score,
                     model_used=article.model_used,
-                    created_at=article.created_at,
-                    openai_usage=usage
+                    usage=usage
                 )
         except Exception as e:
             print(f"Database query failed: {e}")
@@ -752,7 +749,7 @@ async def get_article(
     )
     
     return GenerationResponse(
-        id=article['id'],
+        article_id=article['id'],
         topic=article['topic'],
         thesis=article['thesis'],
         style_examples=article.get('style_examples', ''),
@@ -762,8 +759,7 @@ async def get_article(
         article=article['article'],
         seo_score=article['seo_score'],
         model_used=article['model_used'],
-        created_at=article['created_at'],
-        openai_usage=usage
+        usage=usage
     )
 
 @app.delete("/api/articles/{article_id}")
