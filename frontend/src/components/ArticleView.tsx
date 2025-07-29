@@ -70,6 +70,21 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
     safeUsage.model = article.model_used || 'unknown';
   }
 
+  // Дополнительная проверка - если safeUsage все еще undefined
+  if (!safeUsage) {
+    console.error('safeUsage is undefined, creating fallback');
+    safeUsage = {
+      id: '',
+      article_id: article.article_id || '',
+      model: article.model_used || 'unknown',
+      prompt_tokens: 0,
+      completion_tokens: 0,
+      total_tokens: 0,
+      cost_usd: '0.00',
+      created_at: new Date().toISOString()
+    };
+  }
+
   // Убеждаемся, что все поля статьи безопасны
   const safeArticle = {
     ...article,

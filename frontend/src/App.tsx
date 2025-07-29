@@ -31,6 +31,19 @@ function App() {
         if (versionElement) {
           versionElement.textContent = `v${healthData.version}`;
         }
+        
+        // Принудительно обновляем кэш браузера
+        if ('caches' in window) {
+          try {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+              cacheNames.map(cacheName => caches.delete(cacheName))
+            );
+            console.log('Browser cache cleared');
+          } catch (error) {
+            console.warn('Failed to clear cache:', error);
+          }
+        }
       } catch (error) {
         console.error('Failed to load version:', error);
         // Keep default version
