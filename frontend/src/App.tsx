@@ -93,38 +93,39 @@ function App() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary rounded-lg">
-                <FileText className="h-6 w-6 text-white" />
+        <div className="px-2 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 sm:py-0 sm:h-16">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-primary rounded-lg">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">
                   SEO Article Generator
                 </h1>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   Генерация качественных SEO-статей с помощью ИИ
                 </p>
               </div>
             </div>
 
-            <nav className="flex items-center gap-2">
+            <nav className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
               <Button
                 variant={currentView === 'form' ? 'default' : 'ghost'}
                 onClick={handleBackToForm}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2"
               >
-                <Sparkles className="h-4 w-4" />
-                Создать статью
+                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Создать статью</span>
+                <span className="sm:hidden">Создать</span>
               </Button>
               
               <Button
                 variant={currentView === 'history' ? 'default' : 'ghost'}
                 onClick={() => setCurrentView('history')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2"
               >
-                <History className="h-4 w-4" />
+                <History className="h-3 w-3 sm:h-4 sm:w-4" />
                 История
               </Button>
             </nav>
@@ -133,14 +134,14 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {currentView === 'form' && (
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
                 Создайте качественную SEO-статью за минуты
               </h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-2">
                 Используйте мощь искусственного интеллекта для генерации 
                 оптимизированных статей с автоматическим анализом ключевых слов 
                 и SEO-оценкой
@@ -150,38 +151,38 @@ function App() {
             <ArticleGenerationForm onArticleGenerated={handleArticleGenerated} />
             
             {/* Features */}
-            <div className="grid md:grid-cols-3 gap-6 mt-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mt-8 sm:mt-12">
               <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="h-6 w-6 text-blue-600" />
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                   </div>
-                  <h3 className="font-semibold mb-2">ИИ-генерация</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">ИИ-генерация</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Используем GPT-3.5 и GPT-4 для создания качественного контента
                   </p>
                 </CardContent>
               </Card>
               
               <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <FileText className="h-6 w-6 text-green-600" />
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                   </div>
-                  <h3 className="font-semibold mb-2">SEO-оптимизация</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">SEO-оптимизация</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Автоматический анализ ключевых слов и оценка SEO-качества
                   </p>
                 </CardContent>
               </Card>
               
               <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <History className="h-6 w-6 text-purple-600" />
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <History className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                   </div>
-                  <h3 className="font-semibold mb-2">История статей</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">История статей</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Сохранение и управление всеми созданными статьями
                   </p>
                 </CardContent>
@@ -203,12 +204,12 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center gap-2">
+      <footer className="bg-white border-t border-gray-200 mt-8 sm:mt-12 md:mt-16">
+        <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm text-gray-600">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span>Создано с</span>
-              <Heart className="h-4 w-4 text-red-500" />
+              <Heart className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
               <span>используя FastAPI и React</span>
             </div>
             <div>

@@ -45,54 +45,55 @@
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
+    <div class="min-h-screen flex flex-col">
+        <div class="flex-1 px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">SEO Article Generator</h1>
-            <p class="text-gray-600">Генерация SEO-оптимизированных статей с помощью AI</p>
+        <header class="text-center mb-4 sm:mb-6 md:mb-8">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">SEO Article Generator</h1>
+            <p class="text-sm sm:text-base text-gray-600">Генерация SEO-оптимизированных статей с помощью AI</p>
         </header>
 
         <!-- Navigation -->
-        <nav class="flex justify-center mb-8">
+        <nav class="flex justify-center mb-4 sm:mb-6 md:mb-8">
             <div class="bg-white rounded-lg shadow p-1">
-                <button id="nav-generate" class="px-4 py-2 rounded-md bg-blue-600 text-white font-medium">Генерация</button>
-                <button id="nav-history" class="px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100">История</button>
+                <button id="nav-generate" class="px-3 sm:px-4 py-2 rounded-md bg-blue-600 text-white font-medium text-sm sm:text-base">Генерация</button>
+                <button id="nav-history" class="px-3 sm:px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100 text-sm sm:text-base">История</button>
             </div>
         </nav>
 
         <!-- Main Content -->
-        <main>
+        <main class="flex-1">
             <!-- Generation Form -->
-            <div id="generation-form" class="max-w-2xl mx-auto">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-2xl font-semibold mb-6">Создать новую статью</h2>
+            <div id="generation-form" class="max-w-lg sm:max-w-xl md:max-w-2xl mx-auto">
+                <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+                    <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Создать новую статью</h2>
                     
-                    <form id="article-form" class="space-y-4">
+                    <form id="article-form" class="space-y-3 sm:space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Тема статьи</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Тема статьи</label>
                             <input type="text" id="topic" required 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                                    placeholder="Например: Лучшие способы похудения">
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Тезисы</label>
-                            <textarea id="thesis" rows="4" required
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            <label class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Тезисы</label>
+                            <textarea id="thesis" rows="3" sm:rows="4" required
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                                       placeholder="Основные тезисы и ключевые моменты статьи..."></textarea>
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Примеры стиля (необязательно)</label>
-                            <textarea id="styleExamples" rows="6"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      placeholder="Вставьте примеры текстов, стиль которых нужно использовать при написании статьи. AI проанализирует тон, структуру предложений и способ подачи информации..."></textarea>
+                            <label class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Примеры стиля (необязательно)</label>
+                            <textarea id="styleExamples" rows="4" sm:rows="6"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                                      placeholder="Вставьте примеры текстов, стиль которых нужно использовать при написании статьи..."></textarea>
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Количество знаков</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Количество знаков</label>
                             <select id="characterCount" 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base">
                                 <option value="2000">2000 знаков (короткая статья)</option>
                                 <option value="5000" selected>5000 знаков (средняя статья)</option>
                                 <option value="8000">8000 знаков (длинная статья)</option>
@@ -101,9 +102,9 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Модель</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Модель</label>
                             <select id="model" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base">
                                 <!-- Быстрые модели -->
                                 <optgroup label="🚀 Быстрые">
                                     <option value="gpt-4o-mini">GPT-4o Mini - Самый быстрый и дешевый</option>
@@ -133,7 +134,7 @@
                         </div>
                         
                         <button type="submit" 
-                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm sm:text-base">
                             Сгенерировать статью
                         </button>
                     </form>
@@ -148,11 +149,11 @@
             </div>
 
             <!-- Article View -->
-            <div id="article-view" class="max-w-4xl mx-auto" style="display: none;">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold">Сгенерированная статья</h2>
-                        <button id="back-to-form" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+            <div id="article-view" class="max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto" style="display: none;">
+                <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
+                        <h2 class="text-xl sm:text-2xl font-semibold">Сгенерированная статья</h2>
+                        <button id="back-to-form" class="px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm sm:text-base">
                             Назад к форме
                         </button>
                     </div>
@@ -164,15 +165,15 @@
             </div>
 
             <!-- History -->
-            <div id="history-view" class="max-w-4xl mx-auto" style="display: none;">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold">История статей</h2>
-                        <div class="flex space-x-2">
+            <div id="history-view" class="max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto" style="display: none;">
+                <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
+                        <h2 class="text-xl sm:text-2xl font-semibold">История статей</h2>
+                        <div class="flex flex-col sm:flex-row gap-2">
                             <button onclick="clearLocalHistory()" class="px-3 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
-                                Очистить локальную историю
+                                Очистить историю
                             </button>
-                            <button id="back-to-form-from-history" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                            <button id="back-to-form-from-history" class="px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm sm:text-base">
                                 Назад к форме
                             </button>
                         </div>
@@ -186,9 +187,9 @@
         </main>
         
         <!-- Footer с версией -->
-        <footer class="mt-8 py-4 border-t border-gray-200">
-            <div class="max-w-4xl mx-auto px-4">
-                <div class="flex justify-between items-center text-sm text-gray-500">
+        <footer class="mt-4 sm:mt-6 md:mt-8 py-3 sm:py-4 border-t border-gray-200">
+            <div class="px-2 sm:px-4">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm text-gray-500">
                     <div>
                         <span>SEO Article Generator</span>
                     </div>
