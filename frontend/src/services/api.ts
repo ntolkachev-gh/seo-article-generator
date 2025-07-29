@@ -70,7 +70,7 @@ export const articleApi = {
   },
 
   // Получение статьи по ID
-  getArticle: async (articleId: string): Promise<Article> => {
+  getArticle: async (articleId: string): Promise<GenerationResponse> => {
     const response = await api.get(`/api/articles/${articleId}`);
     return response.data;
   },

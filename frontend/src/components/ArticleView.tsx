@@ -26,6 +26,33 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
   const [recommendations, setRecommendations] = useState<SEORecommendations | null>(null);
   const [showRecommendations, setShowRecommendations] = useState(false);
 
+  // Проверяем, что article существует
+  if (!article) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onBack}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Назад
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">Статья не найдена</h1>
+        </div>
+        <Card>
+          <CardContent className="p-8">
+            <div className="text-center text-muted-foreground">
+              <p>Не удалось загрузить статью. Попробуйте еще раз.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Убеждаемся, что объект usage существует и все поля безопасны
   const safeUsage = article.usage || {
     id: '',

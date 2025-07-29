@@ -292,7 +292,7 @@ async def get_articles(
     articles = crud.get_articles(db, skip=skip, limit=limit)
     return [schemas.ArticleListResponse.from_orm(article) for article in articles]
 
-@app.get("/api/articles/{article_id}", response_model=schemas.ArticleResponse)
+@app.get("/api/articles/{article_id}", response_model=schemas.GenerationResponse)
 async def get_article(
     article_id: UUID,
     db: Session = Depends(get_db)
@@ -304,7 +304,38 @@ async def get_article(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Статья не найдена"
         )
-    return schemas.ArticleResponse.from_orm(article)
+    
+    # Преобразуем ArticleResponse в GenerationResponse
+    article_response = schemas.ArticleResponse.from_orm(article)
+    
+    # Создаем пустой usage объект для совместимости с фронтендом
+    usage_response = schemas.OpenAIUsageResponse(
+        id="",
+        article_id=str(article_id),
+        model=article_response.model_used or "unknown",
+        prompt_tokens=0,
+        completion_tokens=0,
+        total_tokens=0,
+        cost_usd="0.00",
+        created_at=article_response.created_at
+    )
+    
+    # Создаем GenerationResponse
+    generation_response = schemas.GenerationResponse(
+        article_id=article_response.id,
+        topic=article_response.topic,
+        thesis=article_response.thesis,
+        style_examples=article_response.style_examples,
+        character_count=article_response.character_count,
+        keywords=article_response.keywords,
+        structure=article_response.structure,
+        article=article_response.article,
+        seo_score=article_response.seo_score,
+        model_used=article_response.model_used,
+        usage=usage_response
+    )
+    
+    return generation_response
 
 @app.delete("/api/articles/{article_id}")
 async def delete_article(
