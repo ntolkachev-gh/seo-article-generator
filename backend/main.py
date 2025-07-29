@@ -84,10 +84,17 @@ async def generate_article(
     try:
         # Проверяем доступность модели перед началом генерации
         if not ai_service.is_model_available(request.model):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Модель {request.model} недоступна. Проверьте настройки API ключей."
-            )
+            # Проверяем, есть ли вообще доступные сервисы
+            if not ai_service.openai_service and not ai_service.anthropic_service:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Сервис AI недоступен. Проверьте настройки API ключей (OPENAI_API_KEY или ANTHROPIC_API_KEY)."
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Модель {request.model} недоступна. Проверьте настройки API ключей."
+                )
         
         # 1. Анализ SERP
         serp_data = serp_service.analyze_topic(request.topic)

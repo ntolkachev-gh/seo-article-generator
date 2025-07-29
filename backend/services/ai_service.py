@@ -10,12 +10,18 @@ class AIService:
         self.openai_service = None
         self.anthropic_service = None
         
+        print(f"Initializing AIService...")
+        print(f"OPENAI_API_KEY: {'Set' if settings.OPENAI_API_KEY else 'Not set'}")
+        print(f"ANTHROPIC_API_KEY: {'Set' if settings.ANTHROPIC_API_KEY else 'Not set'}")
+        
         # Инициализируем сервисы только если есть соответствующие API ключи
         try:
             from services.openai_service import OpenAIService
             if settings.OPENAI_API_KEY:
                 self.openai_service = OpenAIService()
                 print("OpenAI service initialized successfully")
+            else:
+                print("OpenAI API key not set, skipping OpenAI service")
         except Exception as e:
             print(f"Failed to initialize OpenAI service: {e}")
         
@@ -24,8 +30,13 @@ class AIService:
             if settings.ANTHROPIC_API_KEY:
                 self.anthropic_service = AnthropicService()
                 print("Anthropic service initialized successfully")
+            else:
+                print("Anthropic API key not set, skipping Anthropic service")
         except Exception as e:
             print(f"Failed to initialize Anthropic service: {e}")
+        
+        if not self.openai_service and not self.anthropic_service:
+            print("WARNING: No AI services available. API keys are required.")
     
     def get_provider_for_model(self, model: str) -> str:
         """Определяет провайдера для конкретной модели"""
@@ -84,6 +95,10 @@ class AIService:
     def is_model_available(self, model: str) -> bool:
         """Проверяет доступность модели"""
         try:
+            # Проверяем, есть ли хотя бы один сервис
+            if not self.openai_service and not self.anthropic_service:
+                return False
+            
             provider = self.get_provider_for_model(model)
             if provider == "anthropic":
                 return self.anthropic_service is not None
