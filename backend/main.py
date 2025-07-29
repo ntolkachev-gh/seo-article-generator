@@ -10,7 +10,7 @@ from models import Base
 import crud
 import schemas
 from services.serp_service import SERPService
-from services.openai_service import OpenAIService
+from services.ai_service import AIService  # Изменено на AIService для поддержки разных провайдеров
 from services.seo_service import SEOService
 from config import settings
 
@@ -19,8 +19,8 @@ from config import settings
 
 app = FastAPI(
     title="SEO Article Generator",
-    description="API для генерации SEO-статей с помощью OpenAI",
-    version="1.0.0"
+    description="API для генерации SEO-статей с помощью ИИ",
+    version="2.0.0"
 )
 
 # Настройка CORS
@@ -34,7 +34,7 @@ app.add_middleware(
 
 # Инициализация сервисов
 serp_service = SERPService()
-openai_service = OpenAIService()
+ai_service = AIService()  # Изменено на AIService
 seo_service = SEOService()
 
 @app.get("/")
@@ -54,7 +54,7 @@ async def generate_article(
         questions = serp_data["questions"]
         
         # 2. Генерация структуры статьи
-        structure, structure_usage = openai_service.generate_structure(
+        structure, structure_usage = ai_service.generate_structure(
             request.topic, 
             request.thesis, 
             keywords, 
@@ -62,22 +62,26 @@ async def generate_article(
             request.model
         )
         
-        # 3. Генерация полной статьи
-        article_text, article_usage = openai_service.generate_article(
+        # 3. Генерация полной статьи с новыми параметрами
+        article_text, article_usage = ai_service.generate_article(
             request.topic,
             request.thesis,
             structure,
             keywords,
+            request.style_examples or "",  # Добавлен параметр style_examples
+            request.character_count or 5000,  # Добавлен параметр character_count
             request.model
         )
         
         # 4. Расчет SEO-оценки
         seo_score = seo_service.calculate_seo_score(article_text, keywords)
         
-        # 5. Сохранение в базу данных
+        # 5. Сохранение в базу данных с новыми полями
         article_data = {
             "topic": request.topic,
             "thesis": request.thesis,
+            "style_examples": request.style_examples or "",  # Добавлено
+            "character_count": request.character_count or 5000,  # Добавлено
             "keywords": keywords,
             "structure": structure,
             "article": article_text,
@@ -94,7 +98,7 @@ async def generate_article(
             "total_tokens": structure_usage["total_tokens"] + article_usage["total_tokens"]
         }
         
-        cost = openai_service.calculate_cost(total_usage, request.model)
+        cost = ai_service.calculate_cost(total_usage, request.model)  # Изменено на ai_service
         
         usage_data = {
             "article_id": db_article.id,
@@ -111,6 +115,8 @@ async def generate_article(
             article_id=db_article.id,
             topic=db_article.topic,
             thesis=db_article.thesis,
+            style_examples=getattr(db_article, 'style_examples', ''),  # Добавлено
+            character_count=getattr(db_article, 'character_count', 5000),  # Добавлено
             keywords=db_article.keywords,
             structure=db_article.structure,
             article=db_article.article,

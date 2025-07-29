@@ -63,6 +63,8 @@ class GenerationResponse(BaseModel):
     article_id: UUID
     topic: str
     thesis: str
+    style_examples: Optional[str] = ""
+    character_count: Optional[int] = 5000
     keywords: List[str]
     structure: str
     article: str
