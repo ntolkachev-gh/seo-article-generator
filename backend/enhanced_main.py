@@ -452,6 +452,20 @@ async def generate_with_style(topic: str, thesis: str, style_examples: str, char
 
 Помните, что успех в области {topic.lower()} достигается через сочетание теоретической подготовки, практического опыта и готовности к постоянному обучению."""
 
+        # Calculate usage info
+        structure_usage = None
+        article_usage = None
+        if SERVICES_AVAILABLE and ai_service and 'structure_usage' in locals() and 'article_usage' in locals():
+            total_usage = {
+                "prompt_tokens": structure_usage["prompt_tokens"] + article_usage["prompt_tokens"],
+                "completion_tokens": structure_usage["completion_tokens"] + article_usage["completion_tokens"],
+                "total_tokens": structure_usage["total_tokens"] + article_usage["total_tokens"]
+            }
+            cost = ai_service.calculate_cost(total_usage, model)
+        else:
+            total_usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            cost = 0.0
+        
         # Calculate SEO score
         seo_score = 8.7 if SERVICES_AVAILABLE else 8.5
         
@@ -459,7 +473,9 @@ async def generate_with_style(topic: str, thesis: str, style_examples: str, char
             'keywords': keywords,
             'structure': structure,
             'article': article_text,
-            'seo_score': seo_score
+            'seo_score': seo_score,
+            'usage': total_usage,
+            'cost': cost
         }
         
     except Exception as e:
@@ -522,25 +538,13 @@ async def generate_mock_article(topic: str, thesis: str, style_examples: str, ch
 
 Надеемся, что данная статья была полезной и информативной."""
         
-        # Calculate usage info
-        if SERVICES_AVAILABLE and ai_service and 'structure_usage' in locals() and 'article_usage' in locals():
-            total_usage = {
-                "prompt_tokens": structure_usage["prompt_tokens"] + article_usage["prompt_tokens"],
-                "completion_tokens": structure_usage["completion_tokens"] + article_usage["completion_tokens"],
-                "total_tokens": structure_usage["total_tokens"] + article_usage["total_tokens"]
-            }
-            cost = ai_service.calculate_cost(total_usage, model)
-        else:
-            total_usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
-            cost = 0.0
-        
         return {
             'keywords': keywords,
             'structure': structure,
             'article': article_text,
             'seo_score': 8.5,
-            'usage': total_usage,
-            'cost': cost
+            'usage': {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            'cost': 0.0
         }
 
 @app.post("/api/articles/generate", response_model=GenerationResponse)
