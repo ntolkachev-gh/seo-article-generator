@@ -26,11 +26,11 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
   const [recommendations, setRecommendations] = useState<SEORecommendations | null>(null);
   const [showRecommendations, setShowRecommendations] = useState(false);
 
-  // Убеждаемся, что объект usage существует
+  // Убеждаемся, что объект usage существует и все поля безопасны
   const safeUsage = article.usage || {
     id: '',
-    article_id: article.article_id,
-    model: article.model_used,
+    article_id: article.article_id || '',
+    model: article.model_used || 'unknown',
     prompt_tokens: 0,
     completion_tokens: 0,
     total_tokens: 0,
@@ -38,10 +38,25 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
     created_at: new Date().toISOString()
   };
 
+  // Убеждаемся, что все поля статьи безопасны
+  const safeArticle = {
+    ...article,
+    topic: article.topic || 'Без названия',
+    thesis: article.thesis || '',
+    style_examples: article.style_examples || '',
+    character_count: article.character_count || 5000,
+    keywords: article.keywords || [],
+    structure: article.structure || '',
+    article: article.article || '',
+    seo_score: article.seo_score || 0,
+    model_used: article.model_used || 'unknown',
+    usage: safeUsage
+  };
+
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const recs = await articleApi.getSEORecommendations(article.article_id);
+        const recs = await articleApi.getSEORecommendations(safeArticle.article_id);
         setRecommendations(recs);
       } catch (error) {
         console.error('Failed to fetch SEO recommendations:', error);
@@ -49,7 +64,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
     };
 
     fetchRecommendations();
-  }, [article.article_id]);
+  }, [safeArticle.article_id]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ru-RU', {
@@ -86,7 +101,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
           <ArrowLeft className="h-4 w-4" />
           Назад
         </Button>
-        <h1 className="text-2xl font-bold text-gray-900">{article.topic}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{safeArticle.topic}</h1>
       </div>
 
       {/* Метрики статьи */}
@@ -98,9 +113,9 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
               <div>
                 <p className="text-sm text-muted-foreground">SEO-оценка</p>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">{article.seo_score.toFixed(1)}</span>
-                  <Badge className={getSEOScoreColor(article.seo_score)}>
-                    {getSEOScoreText(article.seo_score)}
+                  <span className="text-2xl font-bold">{safeArticle.seo_score.toFixed(1)}</span>
+                  <Badge className={getSEOScoreColor(safeArticle.seo_score)}>
+                    {getSEOScoreText(safeArticle.seo_score)}
                   </Badge>
                 </div>
               </div>
@@ -114,7 +129,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
               <Zap className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Модель</p>
-                <p className="text-lg font-semibold">{article.model_used}</p>
+                <p className="text-lg font-semibold">{safeArticle.model_used}</p>
               </div>
             </div>
           </CardContent>
@@ -187,7 +202,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {article.keywords.map((keyword, index) => (
+            {safeArticle.keywords.map((keyword, index) => (
               <Badge key={index} variant="secondary">
                 {keyword}
               </Badge>
@@ -202,7 +217,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
           <CardTitle>Тезисы автора</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground whitespace-pre-wrap">{article.thesis}</p>
+          <p className="text-muted-foreground whitespace-pre-wrap">{safeArticle.thesis}</p>
         </CardContent>
       </Card>
 
@@ -213,7 +228,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
         </CardHeader>
         <CardContent>
           <div className="prose prose-sm max-w-none">
-            <ReactMarkdown>{article.structure}</ReactMarkdown>
+            <ReactMarkdown>{safeArticle.structure}</ReactMarkdown>
           </div>
         </CardContent>
       </Card>
@@ -233,7 +248,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({ article, onBack }) => 
         </CardHeader>
         <CardContent>
           <div className="prose prose-lg max-w-none">
-            <ReactMarkdown>{article.article}</ReactMarkdown>
+            <ReactMarkdown>{safeArticle.article}</ReactMarkdown>
           </div>
         </CardContent>
       </Card>

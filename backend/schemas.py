@@ -20,7 +20,7 @@ class ArticleResponse(BaseModel):
     structure: str
     article: str
     seo_score: float
-    model_used: str
+    model_used: str = "unknown"
     created_at: str
     
     class Config:
@@ -40,7 +40,7 @@ class ArticleResponse(BaseModel):
             'structure': obj.structure,
             'article': obj.article,
             'seo_score': obj.seo_score,
-            'model_used': obj.model_used,
+            'model_used': obj.model_used or 'unknown',
             'created_at': obj.created_at.isoformat() if obj.created_at else None
         }
         return cls(**data)
@@ -52,7 +52,7 @@ class ArticleListResponse(BaseModel):
     style_examples: Optional[str] = ""
     character_count: Optional[int] = 5000
     seo_score: float
-    model_used: str
+    model_used: str = "unknown"
     created_at: str
     
     class Config:
@@ -69,7 +69,7 @@ class ArticleListResponse(BaseModel):
             'style_examples': obj.style_examples,
             'character_count': obj.character_count,
             'seo_score': obj.seo_score,
-            'model_used': obj.model_used,
+            'model_used': obj.model_used or 'unknown',
             'created_at': obj.created_at.isoformat() if obj.created_at else None
         }
         return cls(**data)

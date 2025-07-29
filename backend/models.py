@@ -19,7 +19,7 @@ class Article(Base):
     structure = Column(Text, nullable=False)
     article = Column(Text, nullable=False)
     seo_score = Column(Float, nullable=False)
-    model_used = Column(String(50), nullable=False)
+    model_used = Column(String(50), nullable=False, default="unknown")
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationship

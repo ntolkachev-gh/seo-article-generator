@@ -49,27 +49,32 @@ function App() {
     try {
       const article = await articleApi.getArticle(articleId);
       
+      // Проверяем, что все необходимые поля существуют
+      if (!article) {
+        throw new Error('Статья не найдена');
+      }
+      
       // Преобразуем Article в GenerationResponse для совместимости
       const generationResponse: GenerationResponse = {
-        article_id: article.id, // Теперь это уже string
-        topic: article.topic,
-        thesis: article.thesis,
-        style_examples: article.style_examples,
-        character_count: article.character_count,
-        keywords: article.keywords,
-        structure: article.structure,
-        article: article.article,
-        seo_score: article.seo_score,
-        model_used: article.model_used,
+        article_id: article.id || '',
+        topic: article.topic || 'Без названия',
+        thesis: article.thesis || '',
+        style_examples: article.style_examples || '',
+        character_count: article.character_count || 5000,
+        keywords: article.keywords || [],
+        structure: article.structure || '',
+        article: article.article || '',
+        seo_score: article.seo_score || 0,
+        model_used: article.model_used || 'unknown',
         usage: {
           id: '',
-          article_id: article.id, // Теперь это уже string
-          model: article.model_used,
+          article_id: article.id || '',
+          model: article.model_used || 'unknown',
           prompt_tokens: 0,
           completion_tokens: 0,
           total_tokens: 0,
           cost_usd: '0.00',
-          created_at: article.created_at // Теперь это уже string
+          created_at: article.created_at || new Date().toISOString()
         }
       };
       setCurrentArticle(generationResponse);

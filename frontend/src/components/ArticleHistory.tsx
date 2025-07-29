@@ -176,7 +176,7 @@ export const ArticleHistory: React.FC<ArticleHistoryProps> = ({ onViewArticle })
                       
                       <div className="flex items-center gap-1">
                         <Zap className="h-4 w-4" />
-                        {article.model_used}
+                        {article.model_used || 'unknown'}
                       </div>
 
                       {article.character_count && (
