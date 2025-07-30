@@ -8,10 +8,10 @@ import enum
 from database import Base
 
 class ArticleStatus(enum.Enum):
-    PENDING = "pending"          # Ожидает генерации
-    GENERATING = "generating"    # В процессе генерации
-    COMPLETED = "completed"      # Генерация завершена
-    FAILED = "failed"           # Ошибка генерации
+    PENDING = "PENDING"          # Ожидает генерации
+    GENERATING = "GENERATING"    # В процессе генерации
+    COMPLETED = "COMPLETED"      # Генерация завершена
+    FAILED = "FAILED"           # Ошибка генерации
 
 class Article(Base):
     __tablename__ = "articles"
