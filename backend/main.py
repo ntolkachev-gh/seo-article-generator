@@ -30,7 +30,7 @@ from config import settings
 app = FastAPI(
     title="SEO Article Generator",
     description="API для генерации SEO-статей с помощью ИИ",
-    version="2.0.0"
+    version="0.2.0"
 )
 
 # Настройка CORS
@@ -516,7 +516,7 @@ async def health_check():
         return {
             "status": "healthy",
             "message": "Service is running",
-            "version": "2.0.0",
+            "version": "0.2.0",
             "services": {
                 "openai": openai_available,
                 "anthropic": anthropic_available,
@@ -529,7 +529,7 @@ async def health_check():
         return {
             "status": "error",
             "message": f"Service error: {str(e)}",
-            "version": "2.0.0",
+            "version": "0.2.0",
             "services": {
                 "openai": False,
                 "anthropic": False,
