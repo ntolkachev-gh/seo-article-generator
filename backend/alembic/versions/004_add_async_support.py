@@ -1,7 +1,7 @@
 """Add async article generation support
 
 Revision ID: 004_add_async_support
-Revises: 003_add_character_count
+Revises: 002_add_style_examples
 Create Date: 2024-01-01 00:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '004_add_async_support'
-down_revision = '003_add_character_count'
+down_revision = '002_add_style_examples'
 branch_labels = None
 depends_on = None
 
@@ -24,6 +24,9 @@ def upgrade():
     op.add_column('articles', sa.Column('status', article_status_enum, nullable=False, server_default='pending'))
     op.add_column('articles', sa.Column('error_message', sa.Text(), nullable=True))
     op.add_column('articles', sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()))
+    
+    # Добавляем character_count колонку (из миграции 003)
+    op.add_column('articles', sa.Column('character_count', sa.Integer(), nullable=True, server_default='5000'))
     
     # Делаем существующие колонки nullable для поддержки асинхронной генерации
     op.alter_column('articles', 'keywords', nullable=True)
@@ -40,6 +43,9 @@ def downgrade():
     op.alter_column('articles', 'article', nullable=False)
     op.alter_column('articles', 'structure', nullable=False)
     op.alter_column('articles', 'keywords', nullable=False)
+    
+    # Удаляем character_count колонку
+    op.drop_column('articles', 'character_count')
     
     # Удаляем новые колонки
     op.drop_column('articles', 'updated_at')
