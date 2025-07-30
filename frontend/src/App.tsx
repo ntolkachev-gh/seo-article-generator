@@ -9,9 +9,11 @@ import {
   History, 
   FileText,
   Github,
-  Heart
+  Heart,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
-import { GenerationResponse, Article, HealthResponse } from './types/api';
+import { GenerationResponse, Article, HealthResponse, AsyncGenerationResponse } from './types/api';
 import { articleApi } from './services/api';
 import './index.css';
 
@@ -21,6 +23,11 @@ function App() {
   const [currentView, setCurrentView] = useState<ViewMode>('form');
   const [currentArticle, setCurrentArticle] = useState<GenerationResponse | null>(null);
   const [viewingArticleId, setViewingArticleId] = useState<string | null>(null);
+  const [asyncGenerationNotification, setAsyncGenerationNotification] = useState<{
+    show: boolean;
+    message: string;
+    articleId?: string;
+  }>({ show: false, message: '' });
 
   // Load app version on component mount
   useEffect(() => {
@@ -58,6 +65,23 @@ function App() {
     setCurrentView('article');
   };
 
+  const handleAsyncGenerationStarted = (response: AsyncGenerationResponse) => {
+    // Показываем уведомление об успешном запуске генерации
+    setAsyncGenerationNotification({
+      show: true,
+      message: `Генерация статьи "${response.article_id}" запущена! Проверьте прогресс в истории статей.`,
+      articleId: response.article_id
+    });
+
+    // Переходим к истории статей, чтобы пользователь мог следить за прогрессом
+    setCurrentView('history');
+
+    // Скрываем уведомление через 10 секунд
+    setTimeout(() => {
+      setAsyncGenerationNotification({ show: false, message: '' });
+    }, 10000);
+  };
+
   const handleViewHistoryArticle = async (articleId: string) => {
     try {
       console.log('Загружаем статью с ID:', articleId);
@@ -73,6 +97,19 @@ function App() {
       // Дополнительная проверка критических полей
       if (!article.article_id || !article.topic) {
         throw new Error('Статья содержит некорректные данные');
+      }
+
+      // Проверяем статус статьи
+      if (article.status !== 'completed') {
+        // Если статья не завершена, показываем сообщение
+        if (article.status === 'pending') {
+          alert('Статья ожидает начала генерации. Пожалуйста, подождите.');
+        } else if (article.status === 'generating') {
+          alert('Статья генерируется. Пожалуйста, подождите завершения процесса.');
+        } else if (article.status === 'failed') {
+          alert(`Ошибка при генерации статьи: ${article.error_message || 'Неизвестная ошибка'}`);
+        }
+        return;
       }
       
       console.log('Отображаем статью:', article);
@@ -124,8 +161,28 @@ function App() {
     setViewingArticleId(null);
   };
 
+  const dismissNotification = () => {
+    setAsyncGenerationNotification({ show: false, message: '' });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Уведомление об асинхронной генерации */}
+      {asyncGenerationNotification.show && (
+        <div className="bg-green-500 text-white px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5" />
+            <span className="text-sm font-medium">{asyncGenerationNotification.message}</span>
+          </div>
+          <button
+            onClick={dismissNotification}
+            className="text-white hover:text-green-200 ml-4"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="px-2 sm:px-4 md:px-6 lg:px-8">
@@ -183,7 +240,10 @@ function App() {
               </p>
             </div>
             
-            <ArticleGenerationForm onArticleGenerated={handleArticleGenerated} />
+            <ArticleGenerationForm 
+              onArticleGenerated={handleArticleGenerated}
+              onAsyncGenerationStarted={handleAsyncGenerationStarted}
+            />
             
             {/* Features */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mt-4 sm:mt-6 md:mt-8">
@@ -194,7 +254,7 @@ function App() {
                   </div>
                   <h3 className="font-semibold mb-2 text-sm sm:text-base">ИИ-генерация</h3>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    Используем GPT-3.5 и GPT-4 для создания качественного контента
+                    Используем GPT-4 и Claude для создания качественного контента
                   </p>
                 </CardContent>
               </Card>
@@ -214,11 +274,11 @@ function App() {
               <Card>
                 <CardContent className="p-4 sm:p-6 text-center">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <History className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+                    <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                   </div>
-                  <h3 className="font-semibold mb-2 text-sm sm:text-base">История статей</h3>
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">Асинхронная генерация</h3>
                   <p className="text-xs sm:text-sm text-gray-600">
-                    Сохранение и управление всеми созданными статьями
+                    Запускайте генерацию в фоне и следите за прогрессом в реальном времени
                   </p>
                 </CardContent>
               </Card>

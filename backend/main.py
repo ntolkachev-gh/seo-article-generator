@@ -15,12 +15,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 from database import get_db, engine
-from models import Base
+from models import Base, ArticleStatus
 import crud
 import schemas
 from services.serp_service import SERPService
 from services.ai_service import AIService  # Изменено на AIService для поддержки разных провайдеров
 from services.seo_service import SEOService
+from services.background_tasks import background_task_manager
 from config import settings
 
 # Создаем таблицы только при запуске приложения
@@ -64,6 +65,16 @@ async def options_generate_article():
     """Обработчик OPTIONS запросов для CORS preflight"""
     return {"message": "OK"}
 
+@app.options("/api/articles/generate-async")
+async def options_generate_article_async():
+    """Обработчик OPTIONS запросов для асинхронной генерации"""
+    return {"message": "OK"}
+
+@app.options("/api/articles/{article_id}/status")
+async def options_article_status(article_id: str):
+    """Обработчик OPTIONS запросов для статуса статьи"""
+    return {"message": "OK"}
+
 @app.options("/api/articles")
 async def options_articles():
     """Обработчик OPTIONS запросов для списка статей"""
@@ -103,14 +114,109 @@ async def options_health():
     """Обработчик OPTIONS запросов для health check"""
     return {"message": "OK"}
 
+@app.post("/api/articles/generate-async", response_model=schemas.AsyncGenerationResponse)
+async def generate_article_async(
+    request: schemas.GenerationRequest,
+    db: Session = Depends(get_db)
+):
+    """Запускает асинхронную генерацию новой SEO-статьи"""
+    try:
+        logger.info(f"🚀 Запуск асинхронной генерации статьи для темы: {request.topic}")
+        
+        # Проверяем доступность модели перед началом генерации
+        if not ai_service.is_model_available(request.model):
+            logger.error(f"❌ Модель {request.model} недоступна")
+            if not ai_service.openai_service and not ai_service.anthropic_service:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Сервис AI недоступен. Проверьте настройки API ключей (OPENAI_API_KEY или ANTHROPIC_API_KEY)."
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Модель {request.model} недоступна. Проверьте настройки API ключей."
+                )
+        
+        # Создаем запись статьи с минимальными данными
+        db_article = crud.create_article_for_async_generation(db, request)
+        logger.info(f"✅ Создана запись статьи с ID: {db_article.id}")
+        
+        # Подготавливаем параметры для фоновой задачи
+        generation_params = {
+            'topic': request.topic,
+            'thesis': request.thesis,
+            'style_examples': request.style_examples or '',
+            'character_count': request.character_count or 5000,
+            'model': request.model
+        }
+        
+        # Запускаем фоновую задачу
+        await background_task_manager.start_article_generation(db_article.id, generation_params)
+        
+        # Возвращаем ответ с информацией о запущенной задаче
+        return schemas.AsyncGenerationResponse(
+            article_id=str(db_article.id),
+            status="pending",
+            message="Генерация статьи запущена. Используйте эндпоинт /api/articles/{article_id}/status для отслеживания прогресса.",
+            estimated_time=180  # Примерное время генерации в секундах
+        )
+        
+    except ValueError as e:
+        if "API" in str(e) and "key" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Сервис AI недоступен: {str(e)}"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Ошибка валидации: {str(e)}"
+            )
+    except Exception as e:
+        logger.error(f"Ошибка при запуске асинхронной генерации: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка запуска генерации статьи: {str(e)}"
+        )
+
+@app.get("/api/articles/{article_id}/status", response_model=schemas.ArticleStatusResponse)
+async def get_article_status(
+    article_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """Получает статус генерации статьи"""
+    article = crud.get_article(db, article_id)
+    if not article:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Статья не найдена"
+        )
+    
+    # Определяем описание текущего этапа на основе статуса
+    progress_descriptions = {
+        ArticleStatus.PENDING: "Ожидает начала генерации",
+        ArticleStatus.GENERATING: "Генерация в процессе...",
+        ArticleStatus.COMPLETED: "Генерация завершена успешно",
+        ArticleStatus.FAILED: "Ошибка при генерации"
+    }
+    
+    return schemas.ArticleStatusResponse(
+        article_id=str(article_id),
+        status=article.status.value,
+        progress=progress_descriptions.get(article.status, "Неизвестный статус"),
+        error_message=article.error_message,
+        created_at=article.created_at.isoformat() if article.created_at else None,
+        updated_at=article.updated_at.isoformat() if article.updated_at else None
+    )
+
 @app.post("/api/articles/generate", response_model=schemas.GenerationResponse)
 async def generate_article(
     request: schemas.GenerationRequest,
     db: Session = Depends(get_db)
 ):
-    """Генерирует новую SEO-статью"""
+    """Генерирует новую SEO-статью (синхронный режим для обратной совместимости)"""
     try:
-        logger.info(f"🚀 Начинаем генерацию статьи для темы: {request.topic}")
+        logger.info(f"🚀 Начинаем синхронную генерацию статьи для темы: {request.topic}")
         logger.info(f"📊 Параметры запроса: модель={request.model}, тезис={request.thesis}")
         
         # Проверяем доступность модели перед началом генерации
@@ -202,7 +308,8 @@ async def generate_article(
                 "structure": structure,
                 "article": article_text,
                 "seo_score": seo_score,
-                "model_used": request.model
+                "model_used": request.model,
+                "status": ArticleStatus.COMPLETED  # Устанавливаем статус "завершено"
             }
             
             db_article = crud.create_article(db, article_data)
@@ -254,6 +361,8 @@ async def generate_article(
                 article=db_article.article,
                 seo_score=db_article.seo_score,
                 model_used=db_article.model_used,
+                status=db_article.status.value,  # Добавлено
+                error_message=db_article.error_message,  # Добавлено
                 usage=schemas.OpenAIUsageResponse.from_orm(db_usage)
             )
             logger.info(f"🎊 УСПЕХ! Статья полностью сгенерирована. ID: {db_article.id}, длина: {len(article_text)} символов")
@@ -308,17 +417,25 @@ async def get_article(
     # Преобразуем ArticleResponse в GenerationResponse
     article_response = schemas.ArticleResponse.from_orm(article)
     
-    # Создаем пустой usage объект для совместимости с фронтендом
-    usage_response = schemas.OpenAIUsageResponse(
-        id="",
-        article_id=str(article_id),
-        model=article_response.model_used or "unknown",
-        prompt_tokens=0,
-        completion_tokens=0,
-        total_tokens=0,
-        cost_usd="0.00",
-        created_at=article_response.created_at
-    )
+    # Получаем информацию об использовании, если статья завершена
+    usage_response = None
+    if article.status == ArticleStatus.COMPLETED:
+        usage_records = crud.get_article_usage(db, article_id)
+        if usage_records:
+            usage_response = schemas.OpenAIUsageResponse.from_orm(usage_records[0])
+    
+    # Если нет данных об использовании, создаем пустой объект для совместимости
+    if not usage_response:
+        usage_response = schemas.OpenAIUsageResponse(
+            id="",
+            article_id=str(article_id),
+            model=article_response.model_used or "unknown",
+            prompt_tokens=0,
+            completion_tokens=0,
+            total_tokens=0,
+            cost_usd="0.00",
+            created_at=article_response.created_at
+        )
     
     # Создаем GenerationResponse
     generation_response = schemas.GenerationResponse(
@@ -332,6 +449,8 @@ async def get_article(
         article=article_response.article,
         seo_score=article_response.seo_score,
         model_used=article_response.model_used,
+        status=article_response.status,  # Добавлено
+        error_message=article_response.error_message,  # Добавлено
         usage=usage_response
     )
     
@@ -343,6 +462,9 @@ async def delete_article(
     db: Session = Depends(get_db)
 ):
     """Удаляет статью"""
+    # Отменяем фоновую задачу, если она запущена
+    background_task_manager.cancel_task(article_id)
+    
     success = crud.delete_article(db, article_id)
     if not success:
         raise HTTPException(
@@ -362,6 +484,13 @@ async def get_seo_recommendations(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Статья не найдена"
+        )
+    
+    # Проверяем, что статья завершена
+    if article.status != ArticleStatus.COMPLETED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="SEO-рекомендации доступны только для завершенных статей"
         )
     
     recommendations = seo_service.get_seo_recommendations(

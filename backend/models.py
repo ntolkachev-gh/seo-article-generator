@@ -1,10 +1,17 @@
-from sqlalchemy import Column, String, Text, Float, Integer, DateTime, ForeignKey, DECIMAL
+from sqlalchemy import Column, String, Text, Float, Integer, DateTime, ForeignKey, DECIMAL, Enum
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
+import enum
 
 from database import Base
+
+class ArticleStatus(enum.Enum):
+    PENDING = "pending"          # Ожидает генерации
+    GENERATING = "generating"    # В процессе генерации
+    COMPLETED = "completed"      # Генерация завершена
+    FAILED = "failed"           # Ошибка генерации
 
 class Article(Base):
     __tablename__ = "articles"
@@ -15,12 +22,15 @@ class Article(Base):
     thesis = Column(Text, nullable=False)
     style_examples = Column(Text, nullable=True)  # Новое поле для примеров стиля
     character_count = Column(Integer, nullable=True, default=5000)  # Новое поле для количества знаков
-    keywords = Column(JSONB, nullable=False)
-    structure = Column(Text, nullable=False)
-    article = Column(Text, nullable=False)
-    seo_score = Column(Float, nullable=False)
+    keywords = Column(JSONB, nullable=True)  # Теперь может быть None до завершения генерации
+    structure = Column(Text, nullable=True)  # Теперь может быть None до завершения генерации
+    article = Column(Text, nullable=True)  # Теперь может быть None до завершения генерации
+    seo_score = Column(Float, nullable=True)  # Теперь может быть None до завершения генерации
     model_used = Column(String(50), nullable=False, default="unknown")
+    status = Column(Enum(ArticleStatus), nullable=False, default=ArticleStatus.PENDING)  # Новое поле статуса
+    error_message = Column(Text, nullable=True)  # Для хранения сообщений об ошибках
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Новое поле для отслеживания обновлений
     
     # Relationship
     openai_usage = relationship("OpenAIUsage", back_populates="article")

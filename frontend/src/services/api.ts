@@ -1,5 +1,15 @@
 import axios from 'axios';
-import { GenerationRequest, GenerationResponse, Article, ArticleListItem, SEORecommendations, ModelsResponse, HealthResponse } from '../types/api';
+import { 
+  GenerationRequest, 
+  GenerationResponse, 
+  Article, 
+  ArticleListItem, 
+  SEORecommendations, 
+  ModelsResponse, 
+  HealthResponse,
+  AsyncGenerationResponse,
+  ArticleStatusResponse
+} from '../types/api';
 
 // Определяем URL API в зависимости от окружения
 const getApiBaseUrl = () => {
@@ -55,7 +65,19 @@ api.interceptors.response.use(
 );
 
 export const articleApi = {
-  // Генерация новой статьи
+  // Асинхронная генерация новой статьи (рекомендуемый способ)
+  generateArticleAsync: async (data: GenerationRequest): Promise<AsyncGenerationResponse> => {
+    const response = await api.post('/api/articles/generate-async', data);
+    return response.data;
+  },
+
+  // Получение статуса генерации статьи
+  getArticleStatus: async (articleId: string): Promise<ArticleStatusResponse> => {
+    const response = await api.get(`/api/articles/${articleId}/status`);
+    return response.data;
+  },
+
+  // Генерация новой статьи (синхронный режим для обратной совместимости)
   generateArticle: async (data: GenerationRequest): Promise<GenerationResponse> => {
     const response = await api.post('/api/articles/generate', data);
     return response.data;

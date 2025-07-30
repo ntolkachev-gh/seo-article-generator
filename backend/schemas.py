@@ -16,12 +16,15 @@ class ArticleResponse(BaseModel):
     thesis: str
     style_examples: Optional[str] = ""
     character_count: Optional[int] = 5000
-    keywords: List[str]
-    structure: str
-    article: str
-    seo_score: float
+    keywords: Optional[List[str]] = None  # Может быть None до завершения генерации
+    structure: Optional[str] = None       # Может быть None до завершения генерации
+    article: Optional[str] = None         # Может быть None до завершения генерации
+    seo_score: Optional[float] = None     # Может быть None до завершения генерации
     model_used: str = "unknown"
+    status: str = "pending"               # Новое поле статуса
+    error_message: Optional[str] = None   # Новое поле для сообщений об ошибках
     created_at: str
+    updated_at: Optional[str] = None      # Новое поле времени обновления
     
     class Config:
         from_attributes = True
@@ -41,7 +44,10 @@ class ArticleResponse(BaseModel):
             'article': obj.article,
             'seo_score': obj.seo_score,
             'model_used': obj.model_used or 'unknown',
-            'created_at': obj.created_at.isoformat() if obj.created_at else None
+            'status': obj.status.value if obj.status else 'pending',
+            'error_message': obj.error_message,
+            'created_at': obj.created_at.isoformat() if obj.created_at else None,
+            'updated_at': obj.updated_at.isoformat() if obj.updated_at else None
         }
         return cls(**data)
 
@@ -51,9 +57,12 @@ class ArticleListResponse(BaseModel):
     thesis: str
     style_examples: Optional[str] = ""
     character_count: Optional[int] = 5000
-    seo_score: float
+    seo_score: Optional[float] = None     # Может быть None до завершения генерации
     model_used: str = "unknown"
+    status: str = "pending"               # Новое поле статуса
+    error_message: Optional[str] = None   # Новое поле для сообщений об ошибках
     created_at: str
+    updated_at: Optional[str] = None      # Новое поле времени обновления
     
     class Config:
         from_attributes = True
@@ -70,7 +79,10 @@ class ArticleListResponse(BaseModel):
             'character_count': obj.character_count,
             'seo_score': obj.seo_score,
             'model_used': obj.model_used or 'unknown',
-            'created_at': obj.created_at.isoformat() if obj.created_at else None
+            'status': obj.status.value if obj.status else 'pending',
+            'error_message': obj.error_message,
+            'created_at': obj.created_at.isoformat() if obj.created_at else None,
+            'updated_at': obj.updated_at.isoformat() if obj.updated_at else None
         }
         return cls(**data)
 
@@ -115,15 +127,33 @@ class GenerationResponse(BaseModel):
     thesis: str
     style_examples: Optional[str] = ""
     character_count: Optional[int] = 5000
-    keywords: List[str]
-    structure: str
-    article: str
-    seo_score: float
+    keywords: Optional[List[str]] = None  # Может быть None до завершения генерации
+    structure: Optional[str] = None       # Может быть None до завершения генерации
+    article: Optional[str] = None         # Может быть None до завершения генерации
+    seo_score: Optional[float] = None     # Может быть None до завершения генерации
     model_used: str
-    usage: OpenAIUsageResponse
+    status: str = "pending"               # Новое поле статуса
+    error_message: Optional[str] = None   # Новое поле для сообщений об ошибках
+    usage: Optional[OpenAIUsageResponse] = None  # Может быть None до завершения генерации
     
     class Config:
         protected_namespaces = ()
+
+class AsyncGenerationResponse(BaseModel):
+    """Ответ для асинхронной генерации статьи"""
+    article_id: str
+    status: str
+    message: str
+    estimated_time: Optional[int] = None  # Примерное время генерации в секундах
+
+class ArticleStatusResponse(BaseModel):
+    """Ответ для проверки статуса генерации статьи"""
+    article_id: str
+    status: str
+    progress: Optional[str] = None        # Описание текущего этапа
+    error_message: Optional[str] = None
+    created_at: str
+    updated_at: Optional[str] = None
 
 class ModelInfo(BaseModel):
     id: str

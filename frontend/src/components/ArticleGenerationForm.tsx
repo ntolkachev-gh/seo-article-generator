@@ -4,15 +4,19 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Loader2, Sparkles, Zap, Star, Crown } from 'lucide-react';
-import { GenerationRequest, GenerationResponse, ModelInfo } from '../types/api';
+import { Loader2, Sparkles, Zap, Star, Crown, CheckCircle, Clock } from 'lucide-react';
+import { GenerationRequest, GenerationResponse, ModelInfo, AsyncGenerationResponse } from '../types/api';
 import { articleApi } from '../services/api';
 
 interface ArticleGenerationFormProps {
   onArticleGenerated: (article: GenerationResponse) => void;
+  onAsyncGenerationStarted?: (response: AsyncGenerationResponse) => void;
 }
 
-export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ onArticleGenerated }) => {
+export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ 
+  onArticleGenerated, 
+  onAsyncGenerationStarted 
+}) => {
   const [formData, setFormData] = useState<GenerationRequest>({
     topic: '',
     thesis: '',
@@ -30,6 +34,8 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
       anthropic?: boolean;
     };
   } | null>(null);
+  const [generationMode, setGenerationMode] = useState<'async' | 'sync'>('async'); // По умолчанию асинхронный режим
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     loadModels();
@@ -117,19 +123,46 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
 
     setIsLoading(true);
     setError(null);
+    setShowSuccess(false);
 
     try {
-      const response = await articleApi.generateArticle(formData);
-      onArticleGenerated(response);
-      
-      // Очищаем форму после успешной генерации
-      setFormData({
-        topic: '',
-        thesis: '',
-        style_examples: '',
-        character_count: 5000,
-        model: 'gpt-4o-mini'
-      });
+      if (generationMode === 'async') {
+        // Асинхронная генерация (рекомендуемый способ)
+        const response = await articleApi.generateArticleAsync(formData);
+        
+        if (onAsyncGenerationStarted) {
+          onAsyncGenerationStarted(response);
+        }
+        
+        // Показываем сообщение об успешном запуске
+        setShowSuccess(true);
+        
+        // Очищаем форму после успешного запуска
+        setFormData({
+          topic: '',
+          thesis: '',
+          style_examples: '',
+          character_count: 5000,
+          model: 'gpt-4o-mini'
+        });
+        
+        // Скрываем сообщение об успехе через 5 секунд
+        setTimeout(() => setShowSuccess(false), 5000);
+        
+      } else {
+        // Синхронная генерация (для обратной совместимости)
+        const response = await articleApi.generateArticle(formData);
+        onArticleGenerated(response);
+        
+        // Очищаем форму после успешной генерации
+        setFormData({
+          topic: '',
+          thesis: '',
+          style_examples: '',
+          character_count: 5000,
+          model: 'gpt-4o-mini'
+        });
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Произошла ошибка при генерации статьи');
     } finally {
@@ -159,6 +192,43 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Режим генерации */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Режим генерации
+            </label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={generationMode === 'async' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setGenerationMode('async')}
+                disabled={isLoading}
+                className="flex items-center gap-2"
+              >
+                <Clock className="h-4 w-4" />
+                Асинхронно (рекомендуется)
+              </Button>
+              <Button
+                type="button"
+                variant={generationMode === 'sync' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setGenerationMode('sync')}
+                disabled={isLoading}
+                className="flex items-center gap-2"
+              >
+                <Zap className="h-4 w-4" />
+                Синхронно
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {generationMode === 'async' 
+                ? 'Генерация запускается в фоне, вы можете следить за прогрессом в истории статей'
+                : 'Ожидание завершения генерации на текущей странице (может занять до 3 минут)'
+              }
+            </p>
+          </div>
+
           <div className="space-y-2">
             <label htmlFor="topic" className="text-sm font-medium">
               Тема статьи *
@@ -267,6 +337,16 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
             )}
           </div>
 
+          {showSuccess && generationMode === 'async' && (
+            <div className="p-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              <div>
+                <div className="font-medium">Генерация запущена!</div>
+                <div>Статья генерируется в фоне. Проверьте статус в разделе "История статей".</div>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
               {error}
@@ -282,12 +362,12 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({ on
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Генерирую статью...
+                {generationMode === 'async' ? 'Запускаю генерацию...' : 'Генерирую статью...'}
               </>
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Сгенерировать статью
+                {generationMode === 'async' ? 'Запустить генерацию' : 'Сгенерировать статью'}
               </>
             )}
           </Button>
