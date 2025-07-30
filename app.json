@@ -1,5 +1,6 @@
 {
   "name": "seo-article-generator",
+  "version": "0.2.0",
   "description": "AI-powered SEO article generator with FastAPI and React",
   "repository": "https://github.com/yourusername/seo-article-generator",
   "logo": "https://node-js-sample.herokuapp.com/node.png",
