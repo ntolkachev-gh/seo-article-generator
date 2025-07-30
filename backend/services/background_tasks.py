@@ -166,8 +166,8 @@ class BackgroundTaskManager:
         task = self.running_tasks[task_id]
         if task.done():
             if task.exception():
-                return "FAILED"
-            return "COMPLETED"
+                return "failed"
+            return "completed"
         return "running"
     
     def cancel_task(self, article_id: UUID) -> bool:
