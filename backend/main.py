@@ -280,7 +280,7 @@ async def generate_article(
                 request.character_count or 5000,  # Добавлен параметр character_count
                 request.model
             )
-            logger.info(f"✅ Статья сгенерирована. Длина: {len(article_text)} символов, токенов: {article_usage.get('total_tokens', 0)}")
+            logger.info(f"✅ Статья сгенерирована. Длина: {len(article_text)} символов (цель: {request.character_count or 5000}), токенов: {article_usage.get('total_tokens', 0)}")
         except Exception as e:
             logger.error(f"❌ Ошибка при генерации статьи: {str(e)}")
             logger.error(f"📝 Подробности ошибки генерации: {traceback.format_exc()}")

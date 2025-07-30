@@ -156,7 +156,7 @@ class AnthropicService:
 - Зарубежных экспертов
 
 ТРЕБОВАНИЯ К ТЕКСТУ:
-- Размер: {character_count} знаков
+КРИТИЧЕСКИ ВАЖНО: Статья должна быть ТОЧНО {character_count} знаков (±200 знаков). Это строгое требование!
 - Заголовок до 60-70 символов с социальным триггером
 - Лид-абзац 2-3 предложения с главным ключом
 - Подзаголовки H2-H3 по 200-300 символов
@@ -164,6 +164,11 @@ class AnthropicService:
 - Форматирование: буллеты, нумерация, цитаты
 - Bold для выводов, italic для терминов
 - БЕЗ таблиц
+
+КОНТРОЛЬ ДЛИНЫ:
+- Если текст получается короче {character_count} знаков - добавь больше примеров, деталей, объяснений
+- Если текст получается длиннее {character_count} знаков - сократи, убери лишние детали
+- В конце проверь длину и подкорректируй до нужного размера
 
 СТРУКТУРА КОНТЕНТА:
 1. Эмоциональный зацеп в начале
@@ -198,6 +203,9 @@ class AnthropicService:
                 "completion_tokens": response.usage.output_tokens,
                 "total_tokens": response.usage.input_tokens + response.usage.output_tokens
             }
+            
+            # Проверяем и корректируем длину статьи
+            article = self._adjust_article_length(article, character_count, model)
             
             return article, usage_info
             
@@ -235,4 +243,98 @@ class AnthropicService:
         input_cost = (usage_info["prompt_tokens"] / 1000) * pricing["input"]
         output_cost = (usage_info["completion_tokens"] / 1000) * pricing["output"]
         
-        return Decimal(str(input_cost + output_cost)).quantize(Decimal('0.000001')) 
+        return Decimal(str(input_cost + output_cost)).quantize(Decimal('0.000001'))
+    
+    def _adjust_article_length(self, article: str, target_length: int, model: str) -> str:
+        """Корректирует длину статьи если она не соответствует требованиям"""
+        current_length = len(article)
+        tolerance = 200  # Допустимое отклонение
+        
+        # Если длина в пределах допустимого отклонения, возвращаем как есть
+        if target_length - tolerance <= current_length <= target_length + tolerance:
+            return article
+        
+        print(f"Корректируем длину статьи: текущая {current_length}, нужна {target_length}")
+        
+        if current_length < target_length - tolerance:
+            # Статья слишком короткая, нужно расширить
+            return self._expand_article(article, target_length, model)
+        elif current_length > target_length + tolerance:
+            # Статья слишком длинная, нужно сократить
+            return self._shorten_article(article, target_length, model)
+        
+        return article
+    
+    def _expand_article(self, article: str, target_length: int, model: str) -> str:
+        """Расширяет статью до нужной длины"""
+        try:
+            prompt = f"""
+Исходная статья:
+{article}
+
+ЗАДАЧА: Расширь эту статью до {target_length} знаков (сейчас {len(article)} знаков).
+
+ТРЕБОВАНИЯ:
+- Добавь больше деталей, примеров, объяснений
+- Сохрани стиль и структуру оригинала
+- Не добавляй новые разделы, только расширяй существующие
+- Итоговая длина должна быть близка к {target_length} знакам
+
+Верни ТОЛЬКО расширенную статью без комментариев.
+"""
+            
+            config = self.get_model_config(model)
+            response = self.client.messages.create(
+                model=model,
+                max_tokens=config["max_tokens"],
+                temperature=0.3,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+            
+            return response.content[0].text
+            
+        except Exception as e:
+            print(f"Error expanding article: {e}")
+            return article
+    
+    def _shorten_article(self, article: str, target_length: int, model: str) -> str:
+        """Сокращает статью до нужной длины"""
+        try:
+            prompt = f"""
+Исходная статья:
+{article}
+
+ЗАДАЧА: Сократи эту статью до {target_length} знаков (сейчас {len(article)} знаков).
+
+ТРЕБОВАНИЯ:
+- Убери лишние детали, повторы, избыточные объяснения
+- Сохрани основную суть, структуру и ключевые идеи
+- Сохрани все заголовки и важные выводы
+- Итоговая длина должна быть близка к {target_length} знакам
+
+Верни ТОЛЬКО сокращенную статью без комментариев.
+"""
+            
+            config = self.get_model_config(model)
+            response = self.client.messages.create(
+                model=model,
+                max_tokens=config["max_tokens"],
+                temperature=0.3,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+            
+            return response.content[0].text
+            
+        except Exception as e:
+            print(f"Error shortening article: {e}")
+            return article 
