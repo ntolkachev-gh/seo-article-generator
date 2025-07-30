@@ -274,6 +274,9 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
             <label htmlFor="character_count" className="text-sm font-medium">
               Размер статьи (знаков)
             </label>
+            <p className="text-xs text-gray-600">
+              ИИ будет строго следить за указанной длиной (±200 знаков)
+            </p>
             <Select
               value={formData.character_count?.toString()}
               onValueChange={(value: string) => 
@@ -285,10 +288,12 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="3000">3 000 знаков (короткая)</SelectItem>
-                <SelectItem value="5000">5 000 знаков (средняя)</SelectItem>
-                <SelectItem value="7000">7 000 знаков (длинная)</SelectItem>
-                <SelectItem value="10000">10 000 знаков (очень длинная)</SelectItem>
+                <SelectItem value="2000">2 000 знаков (краткая заметка)</SelectItem>
+                <SelectItem value="3000">3 000 знаков (короткая статья)</SelectItem>
+                <SelectItem value="5000">5 000 знаков (средняя статья)</SelectItem>
+                <SelectItem value="7000">7 000 знаков (подробная статья)</SelectItem>
+                <SelectItem value="10000">10 000 знаков (развернутая статья)</SelectItem>
+                <SelectItem value="15000">15 000 знаков (длинная статья)</SelectItem>
               </SelectContent>
             </Select>
           </div>
