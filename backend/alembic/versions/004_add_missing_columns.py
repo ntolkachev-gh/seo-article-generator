@@ -76,7 +76,7 @@ def upgrade():
             op.alter_column('articles', column, nullable=True)
     
     # Обновляем существующие записи - устанавливаем статус 'completed' для уже сгенерированных статей
-    connection.execute("UPDATE articles SET status = 'completed' WHERE article IS NOT NULL AND article != '' AND status = 'pending'")
+    connection.execute(text("UPDATE articles SET status = 'completed' WHERE article IS NOT NULL AND article != '' AND status = 'pending'"))
 
 def downgrade():
     # Возвращаем обратно nullable=False для основных полей
