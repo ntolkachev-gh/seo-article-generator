@@ -8,6 +8,7 @@ Create Date: 2024-01-01 00:00:00.000000
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = '004'
@@ -20,11 +21,11 @@ def upgrade():
     connection = op.get_bind()
     
     # Проверяем существование колонки status
-    result = connection.execute("""
+    result = connection.execute(text("""
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'articles' AND column_name = 'status'
-    """).fetchone()
+    """)).fetchone()
     
     if not result:
         # Создаем enum тип для статуса
@@ -33,31 +34,31 @@ def upgrade():
         op.add_column('articles', sa.Column('status', article_status_enum, nullable=False, server_default='pending'))
     
     # Проверяем существование колонки error_message
-    result = connection.execute("""
+    result = connection.execute(text("""
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'articles' AND column_name = 'error_message'
-    """).fetchone()
+    """)).fetchone()
     
     if not result:
         op.add_column('articles', sa.Column('error_message', sa.Text(), nullable=True))
     
     # Проверяем существование колонки updated_at
-    result = connection.execute("""
+    result = connection.execute(text("""
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'articles' AND column_name = 'updated_at'
-    """).fetchone()
+    """)).fetchone()
     
     if not result:
         op.add_column('articles', sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()))
     
     # Проверяем существование колонки style_examples
-    result = connection.execute("""
+    result = connection.execute(text("""
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'articles' AND column_name = 'style_examples'
-    """).fetchone()
+    """)).fetchone()
     
     if not result:
         op.add_column('articles', sa.Column('style_examples', sa.Text(), nullable=True))
@@ -65,11 +66,11 @@ def upgrade():
     # Делаем существующие колонки nullable для поддержки асинхронной генерации
     # Проверяем, не nullable ли уже колонки
     for column in ['keywords', 'structure', 'article', 'seo_score']:
-        result = connection.execute(f"""
+        result = connection.execute(text(f"""
             SELECT is_nullable 
             FROM information_schema.columns 
             WHERE table_name = 'articles' AND column_name = '{column}'
-        """).fetchone()
+        """)).fetchone()
         
         if result and result[0] == 'NO':
             op.alter_column('articles', column, nullable=True)
