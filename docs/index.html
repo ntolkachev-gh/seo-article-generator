@@ -65,33 +65,70 @@
         .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
             word-wrap: break-word;
             overflow-wrap: break-word;
+            max-width: 100%;
         }
         
         .prose p {
             word-wrap: break-word;
             overflow-wrap: break-word;
             margin-bottom: 1rem;
+            max-width: 100%;
         }
         
         .prose ul, .prose ol {
             word-wrap: break-word;
             overflow-wrap: break-word;
+            max-width: 100%;
         }
         
         .prose li {
             word-wrap: break-word;
             overflow-wrap: break-word;
+            max-width: 100%;
         }
         
         .prose strong, .prose em {
             word-wrap: break-word;
             overflow-wrap: break-word;
+            max-width: 100%;
         }
         
         /* Ограничение ширины контейнера */
         .article-container {
             max-width: 100%;
-            overflow-x: hidden;
+            overflow-x: auto;
+            overflow-y: visible;
+        }
+        
+        /* Стили для длинных слов */
+        .break-words {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+        
+        /* Адаптивные стили для мобильных устройств */
+        @media (max-width: 768px) {
+            .prose {
+                font-size: 14px;
+                line-height: 1.6;
+            }
+            
+            .prose h1 {
+                font-size: 1.5rem;
+            }
+            
+            .prose h2 {
+                font-size: 1.25rem;
+            }
+            
+            .prose h3 {
+                font-size: 1.125rem;
+            }
+            
+            .article-container {
+                padding: 0.5rem;
+            }
         }
     </style>
 </head>
@@ -198,21 +235,37 @@
                 </div>
             </div>
 
-            <!-- Article View -->
-            <div id="article-view" class="max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto" style="display: none;">
-                <div class="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4 md:mb-6">
-                        <h2 class="text-xl sm:text-2xl font-semibold">Сгенерированная статья</h2>
-                        <button id="back-to-form" class="px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm sm:text-base">
-                            Назад к форме
+                    <!-- Article Modal -->
+        <div id="article-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-900">Сгенерированная статья</h2>
+                        <button id="close-modal" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                            &times;
                         </button>
                     </div>
                     
-                    <div id="article-content" class="article-container overflow-hidden">
-                        <!-- Article content will be inserted here -->
+                    <!-- Modal Content -->
+                    <div class="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+                        <div id="article-content" class="article-container">
+                            <!-- Article content will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Modal Footer -->
+                    <div class="flex items-center justify-between p-4 border-t border-gray-200">
+                        <button id="back-to-form" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                            Назад к форме
+                        </button>
+                        <button id="copy-article" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Копировать статью
+                        </button>
                     </div>
                 </div>
             </div>
+        </div>
 
             <!-- History -->
             <div id="history-view" class="max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto" style="display: none;">
@@ -270,19 +323,21 @@
         const navGenerate = document.getElementById('nav-generate');
         const navHistory = document.getElementById('nav-history');
         const generationForm = document.getElementById('generation-form');
-        const articleView = document.getElementById('article-view');
+        const articleModal = document.getElementById('article-modal');
         const historyView = document.getElementById('history-view');
         const articleForm = document.getElementById('article-form');
         const loading = document.getElementById('loading');
         const errorMessage = document.getElementById('error-message');
         const articleContent = document.getElementById('article-content');
+        const closeModal = document.getElementById('close-modal');
         const backToForm = document.getElementById('back-to-form');
+        const copyArticle = document.getElementById('copy-article');
         const backToFormFromHistory = document.getElementById('back-to-form-from-history');
         const historyContent = document.getElementById('history-content');
         
         // Проверяем наличие всех необходимых элементов
         const requiredElements = {
-            navGenerate, navHistory, generationForm, articleView, historyView, 
+            navGenerate, navHistory, generationForm, articleModal, historyView, 
             articleForm, loading, errorMessage, articleContent, historyContent
         };
         
@@ -295,28 +350,74 @@
         // Navigation
         navGenerate.addEventListener('click', () => showView('generation'));
         navHistory.addEventListener('click', () => showView('history'));
-        backToForm.addEventListener('click', () => showView('generation'));
+        closeModal.addEventListener('click', () => hideModal());
+        backToForm.addEventListener('click', () => hideModal());
+        copyArticle.addEventListener('click', () => copyArticleToClipboard());
         backToFormFromHistory.addEventListener('click', () => showView('generation'));
 
         function showView(view) {
             // Показываем нужный вид
             if (view === 'generation' || view === 'form') {
                 generationForm.style.display = 'block';
-                articleView.style.display = 'none';
-                historyView.style.display = 'none';
-            } else if (view === 'article') {
-                generationForm.style.display = 'none';
-                articleView.style.display = 'block';
                 historyView.style.display = 'none';
             } else if (view === 'history') {
                 generationForm.style.display = 'none';
-                articleView.style.display = 'none';
                 historyView.style.display = 'block';
             }
             
             // Update navigation
             navGenerate.className = (view === 'generation' || view === 'form') ? 'px-4 py-2 rounded-md bg-blue-600 text-white font-medium' : 'px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100';
             navHistory.className = view === 'history' ? 'px-4 py-2 rounded-md bg-blue-600 text-white font-medium' : 'px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100';
+        }
+        
+        function showModal() {
+            articleModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Блокируем прокрутку страницы
+            
+            // Добавляем обработчик для закрытия по клику вне модального окна
+            articleModal.addEventListener('click', function(e) {
+                if (e.target === articleModal) {
+                    hideModal();
+                }
+            });
+        }
+        
+        function hideModal() {
+            articleModal.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Восстанавливаем прокрутку страницы
+        }
+        
+        function copyArticleToClipboard() {
+            const articleText = articleContent.innerText || articleContent.textContent;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(articleText).then(() => {
+                    alert('Статья скопирована в буфер обмена!');
+                }).catch(err => {
+                    console.error('Ошибка при копировании:', err);
+                    fallbackCopyTextToClipboard(articleText);
+                });
+            } else {
+                fallbackCopyTextToClipboard(articleText);
+            }
+        }
+        
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert('Статья скопирована в буфер обмена!');
+            } catch (err) {
+                console.error('Ошибка при копировании:', err);
+                alert('Не удалось скопировать статью. Попробуйте выделить текст вручную.');
+            }
+            document.body.removeChild(textArea);
         }
 
         // Form submission
@@ -343,7 +444,7 @@
                 localStorage.setItem('articles', JSON.stringify(articles));
                 
                 displayArticle(response.data);
-                showView('article');
+                showModal();
             } catch (error) {
                 showError('Ошибка при генерации статьи: ' + (error.response?.data?.detail || error.message));
             } finally {
@@ -526,8 +627,8 @@
                 
                 <div class="mb-6">
                     <h4 class="text-lg font-semibold mb-2">Готовая статья:</h4>
-                    <div class="bg-white p-4 rounded-md border overflow-hidden">
-                        <div class="prose max-w-none break-words whitespace-normal">
+                    <div class="bg-white p-4 rounded-md border">
+                        <div class="prose max-w-none break-words">
                             ${renderMarkdown(article.article)}
                         </div>
                     </div>
@@ -588,8 +689,8 @@
                 if (article) {
                     console.log('Отображаем статью:', article);
                     displayArticle(article);
-                    console.log('Переключаемся на вид article');
-                    showView('article');
+                    console.log('Показываем модальное окно');
+                    showModal();
                 } else {
                     showError('Статья не найдена ни на сервере, ни в локальном хранилище.');
                 }
