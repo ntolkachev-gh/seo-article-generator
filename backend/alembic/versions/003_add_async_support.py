@@ -1,7 +1,7 @@
 """Add async article generation support
 
-Revision ID: 004_add_async_support
-Revises: 002_add_style_examples
+Revision ID: 003
+Revises: 002
 Create Date: 2024-01-01 00:00:00.000000
 
 """
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '004_add_async_support'
-down_revision = '002_add_style_examples'
+revision = '003'
+down_revision = '002'
 branch_labels = None
 depends_on = None
 
@@ -25,7 +25,7 @@ def upgrade():
     op.add_column('articles', sa.Column('error_message', sa.Text(), nullable=True))
     op.add_column('articles', sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()))
     
-    # Добавляем character_count колонку (из миграции 003)
+    # Добавляем character_count колонку
     op.add_column('articles', sa.Column('character_count', sa.Integer(), nullable=True, server_default='5000'))
     
     # Делаем существующие колонки nullable для поддержки асинхронной генерации
