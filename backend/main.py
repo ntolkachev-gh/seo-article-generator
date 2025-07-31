@@ -119,64 +119,42 @@ async def generate_article_async(
     request: schemas.GenerationRequest,
     db: Session = Depends(get_db)
 ):
-    """Запускает асинхронную генерацию новой SEO-статьи"""
+    """Сохраняет параметры генерации статьи в базу данных со статусом 'pending' (асинхронный режим)"""
     try:
-        logger.info(f"🚀 Запуск асинхронной генерации статьи для темы: {request.topic}")
+        logger.info(f"💾 Сохраняем параметры генерации статьи (асинхронно) для темы: {request.topic}")
         
-        # Проверяем доступность модели перед началом генерации
-        if not ai_service.is_model_available(request.model):
-            logger.error(f"❌ Модель {request.model} недоступна")
-            if not ai_service.openai_service and not ai_service.anthropic_service:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Сервис AI недоступен. Проверьте настройки API ключей (OPENAI_API_KEY или ANTHROPIC_API_KEY)."
-                )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Модель {request.model} недоступна. Проверьте настройки API ключей."
-                )
-        
-        # Создаем запись статьи с минимальными данными
-        db_article = crud.create_article_for_async_generation(db, request)
-        logger.info(f"✅ Создана запись статьи с ID: {db_article.id}")
-        
-        # Подготавливаем параметры для фоновой задачи
-        generation_params = {
-            'topic': request.topic,
-            'thesis': request.thesis,
-            'style_examples': request.style_examples or '',
-            'character_count': request.character_count or 5000,
-            'model': request.model
+        # Создаем запись статьи с параметрами и статусом "pending"
+        logger.info("💾 Создаем запись статьи в базе данных...")
+        article_data = {
+            "topic": request.topic,
+            "thesis": request.thesis,
+            "style_examples": request.style_examples or "",
+            "character_count": request.character_count or 5000,
+            "model_used": request.model,
+            "status": ArticleStatus.PENDING,  # Устанавливаем статус "pending"
+            "keywords": None,
+            "structure": None,
+            "article": None,
+            "seo_score": None,
+            "error_message": None
         }
         
-        # Запускаем фоновую задачу
-        await background_task_manager.start_article_generation(db_article.id, generation_params)
+        db_article = crud.create_article(db, article_data)
+        logger.info(f"✅ Создана запись статьи с ID: {db_article.id}")
         
-        # Возвращаем ответ с информацией о запущенной задаче
+        # Возвращаем ответ с информацией о сохраненной статье
         return schemas.AsyncGenerationResponse(
             article_id=str(db_article.id),
             status="pending",
-            message="Генерация статьи запущена. Используйте эндпоинт /api/articles/{article_id}/status для отслеживания прогресса.",
-            estimated_time=180  # Примерное время генерации в секундах
+            message="Параметры генерации сохранены. Статья ожидает генерации.",
+            estimated_time=None  # Нет оценки времени, так как генерация не запущена
         )
         
-    except ValueError as e:
-        if "API" in str(e) and "key" in str(e).lower():
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Сервис AI недоступен: {str(e)}"
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ошибка валидации: {str(e)}"
-            )
     except Exception as e:
-        logger.error(f"Ошибка при запуске асинхронной генерации: {traceback.format_exc()}")
+        logger.error(f"Ошибка сохранения параметров генерации (асинхронно): {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка запуска генерации статьи: {str(e)}"
+            detail=f"Ошибка сохранения параметров генерации: {str(e)}"
         )
 
 @app.get("/api/articles/{article_id}/status", response_model=schemas.ArticleStatusResponse)

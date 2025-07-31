@@ -134,10 +134,10 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
           onAsyncGenerationStarted(response);
         }
         
-        // Показываем сообщение об успешном запуске
+        // Показываем сообщение об успешном сохранении параметров
         setShowSuccess(true);
         
-        // Очищаем форму после успешного запуска
+        // Очищаем форму после успешного сохранения
         setFormData({
           topic: '',
           thesis: '',
@@ -154,7 +154,7 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
         const response = await articleApi.generateArticle(formData);
         onArticleGenerated(response);
         
-        // Очищаем форму после успешной генерации
+        // Очищаем форму после успешного сохранения
         setFormData({
           topic: '',
           thesis: '',
@@ -184,10 +184,10 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-primary" />
-          Генерация SEO-статьи
+          Создание SEO-статьи
         </CardTitle>
         <CardDescription>
-          Заполните форму ниже, чтобы сгенерировать качественную SEO-статью с помощью ИИ
+          Заполните форму ниже, чтобы сохранить параметры для генерации SEO-статьи
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -223,8 +223,8 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
             </div>
             <p className="text-xs text-muted-foreground">
               {generationMode === 'async' 
-                ? 'Генерация запускается в фоне, вы можете следить за прогрессом в истории статей'
-                : 'Ожидание завершения генерации на текущей странице (может занять до 3 минут)'
+                ? 'Параметры сохраняются в базе данных, вы можете следить за статьями в истории'
+                : 'Параметры сохраняются в базе данных, вы можете следить за статьями в истории'
               }
             </p>
           </div>
@@ -372,7 +372,7 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                {generationMode === 'async' ? 'Запустить генерацию' : 'Сгенерировать статью'}
+                {generationMode === 'async' ? 'Сохранить параметры' : 'Сохранить параметры'}
               </>
             )}
           </Button>
