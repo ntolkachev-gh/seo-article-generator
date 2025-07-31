@@ -177,6 +177,21 @@ class GenerationParamsResponse(BaseModel):
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
+class ArticleCompletionRequest(BaseModel):
+    """Запрос для завершения статьи готовым контентом"""
+    keywords: List[str]
+    structure: str
+    article: str
+    seo_score: Optional[float] = None
+    usage: Optional[dict] = None  # Информация об использовании токенов
+    
+class ArticleCompletionResponse(BaseModel):
+    """Ответ на завершение статьи"""
+    article_id: str
+    status: str
+    message: str
+    updated_at: str
+
 class HealthResponse(BaseModel):
     """Ответ для проверки здоровья API"""
     status: str = "healthy"

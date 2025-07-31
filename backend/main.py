@@ -8,6 +8,7 @@ import logging
 import traceback
 import aiohttp
 import json
+from datetime import datetime
 
 # Настройка логирования
 logging.basicConfig(
@@ -117,6 +118,11 @@ async def options_generate_article_async():
 @app.options("/api/articles/{article_id}/status")
 async def options_article_status(article_id: str):
     """Обработчик OPTIONS запросов для статуса статьи"""
+    return {"message": "OK"}
+
+@app.options("/api/articles/{article_id}/complete")
+async def options_complete_article(article_id: str):
+    """Обработчик OPTIONS запросов для завершения статьи"""
     return {"message": "OK"}
 
 @app.options("/api/articles")
@@ -234,6 +240,79 @@ async def get_article_status(
         created_at=article.created_at.isoformat() if article.created_at else None,
         updated_at=article.updated_at.isoformat() if article.updated_at else None
     )
+
+@app.put("/api/articles/{article_id}/complete", response_model=schemas.ArticleCompletionResponse)
+async def complete_article(
+    article_id: UUID,
+    request: schemas.ArticleCompletionRequest,
+    db: Session = Depends(get_db)
+):
+    """Завершает статью готовым контентом и устанавливает статус 'completed'"""
+    try:
+        logger.info(f"📝 Завершаем статью {article_id} готовым контентом")
+        
+        # Проверяем, существует ли статья
+        article = crud.get_article(db, article_id)
+        if not article:
+            logger.error(f"❌ Статья {article_id} не найдена")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Статья не найдена"
+            )
+        
+        # Подготавливаем данные для обновления
+        content_data = {
+            "keywords": request.keywords,
+            "structure": request.structure,
+            "article": request.article,
+            "seo_score": request.seo_score,
+            "status": ArticleStatus.COMPLETED,
+            "error_message": None,
+            "updated_at": asyncio.get_event_loop().time()
+        }
+        
+        # Обновляем статью
+        success = crud.update_article_content(db, article_id, content_data)
+        if not success:
+            logger.error(f"❌ Не удалось обновить статью {article_id}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Не удалось обновить статью"
+            )
+        
+        # Сохраняем информацию об использовании токенов, если передана
+        if request.usage:
+            try:
+                usage_data = {
+                    "article_id": article_id,
+                    "model": request.usage.get("model", article.model_used),
+                    "prompt_tokens": request.usage.get("prompt_tokens", 0),
+                    "completion_tokens": request.usage.get("completion_tokens", 0),
+                    "total_tokens": request.usage.get("total_tokens", 0),
+                    "cost_usd": request.usage.get("cost_usd", 0.0)
+                }
+                crud.create_openai_usage(db, usage_data)
+                logger.info(f"💰 Сохранена информация об использовании токенов для статьи {article_id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Не удалось сохранить информацию об использовании: {str(e)}")
+        
+        logger.info(f"✅ Статья {article_id} успешно завершена")
+        
+        return schemas.ArticleCompletionResponse(
+            article_id=str(article_id),
+            status="completed",
+            message="Статья успешно завершена и сохранена",
+            updated_at=datetime.utcnow().isoformat()
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Ошибка при завершении статьи {article_id}: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка при завершении статьи: {str(e)}"
+        )
 
 @app.post("/api/articles/generate", response_model=schemas.GenerationResponse)
 async def generate_article(
