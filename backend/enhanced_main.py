@@ -53,7 +53,7 @@ if DATABASE_AVAILABLE:
 app = FastAPI(
     title="SEO Article Generator",
     description="AI-powered SEO article generator with style examples",
-    version="0.2.0"
+    version="0.3.0"
 )
 
 # Настройка CORS
