@@ -6,6 +6,8 @@ from uuid import UUID
 import asyncio
 import logging
 import traceback
+import aiohttp
+import json
 
 # Настройка логирования
 logging.basicConfig(
@@ -26,6 +28,48 @@ from config import settings
 
 # Создаем таблицы только при запуске приложения
 # Base.metadata.create_all(bind=engine)
+
+# Webhook configuration
+N8N_WEBHOOK_URL = "https://n8n.tech.ai-community.com/webhook-test/generate-article"
+
+async def send_webhook_to_n8n(article_id: str, article_data: dict = None):
+    """Отправляет webhook на n8n с Article ID и дополнительными данными"""
+    try:
+        payload = {
+            "article_id": article_id,
+            "timestamp": asyncio.get_event_loop().time(),
+            "event": "article_created",
+            "status": "pending"
+        }
+        
+        # Добавляем дополнительную информацию о статье, если передана
+        if article_data:
+            payload.update({
+                "topic": article_data.get("topic"),
+                "thesis": article_data.get("thesis", "")[:200] + "..." if len(article_data.get("thesis", "")) > 200 else article_data.get("thesis", ""),  # Обрезаем длинный тезис
+                "model_used": article_data.get("model_used"),
+                "character_count": article_data.get("character_count")
+            })
+        
+        logger.info(f"🔗 Отправляем webhook на n8n для статьи {article_id}")
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                N8N_WEBHOOK_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=aiohttp.ClientTimeout(total=10)  # 10 секунд таймаут
+            ) as response:
+                if response.status == 200:
+                    logger.info(f"✅ Webhook успешно отправлен на n8n для статьи {article_id}")
+                else:
+                    logger.warning(f"⚠️ Webhook вернул статус {response.status} для статьи {article_id}")
+                    
+    except asyncio.TimeoutError:
+        logger.error(f"❌ Таймаут при отправке webhook на n8n для статьи {article_id}")
+    except Exception as e:
+        logger.error(f"❌ Ошибка отправки webhook на n8n для статьи {article_id}: {str(e)}")
+        # Не прерываем выполнение, если webhook не работает
 
 app = FastAPI(
     title="SEO Article Generator",
@@ -142,9 +186,13 @@ async def generate_article_async(
         db_article = crud.create_article(db, article_data)
         logger.info(f"✅ Создана запись статьи с ID: {db_article.id}")
         
+        # Отправляем webhook на n8n с Article ID и данными статьи
+        article_id_str = str(db_article.id)
+        await send_webhook_to_n8n(article_id_str, article_data)
+        
         # Возвращаем ответ с информацией о сохраненной статье
         return schemas.AsyncGenerationResponse(
-            article_id=str(db_article.id),
+            article_id=article_id_str,
             status="pending",
             message="Параметры генерации сохранены. Статья ожидает генерации.",
             estimated_time=None  # Нет оценки времени, так как генерация не запущена
