@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Loader2, Sparkles, Zap, Star, Crown, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, Sparkles, Zap, Star, Crown, CheckCircle } from 'lucide-react';
 import { GenerationRequest, GenerationResponse, ModelInfo, AsyncGenerationResponse } from '../types/api';
 import { articleApi } from '../services/api';
 
@@ -34,7 +34,6 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
       anthropic?: boolean;
     };
   } | null>(null);
-  const [generationMode, setGenerationMode] = useState<'async' | 'sync'>('async'); // По умолчанию асинхронный режим
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
@@ -126,45 +125,30 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
     setShowSuccess(false);
 
     try {
-      if (generationMode === 'async') {
-        // Асинхронная генерация (рекомендуемый способ)
-        const response = await articleApi.generateArticleAsync(formData);
-        
-        if (onAsyncGenerationStarted) {
-          onAsyncGenerationStarted(response);
-        }
-        
-        // Показываем сообщение об успешном сохранении параметров
-        setShowSuccess(true);
-        
-        // Очищаем форму после успешного сохранения
-        setFormData({
-          topic: '',
-          thesis: '',
-          style_examples: '',
-          character_count: 5000,
-          model: 'gpt-4o-mini'
-        });
-        
-        // Скрываем сообщение об успехе через 5 секунд
-        setTimeout(() => setShowSuccess(false), 5000);
-        
-      } else {
-        // Синхронная генерация (для обратной совместимости)
-        const response = await articleApi.generateArticle(formData);
-        onArticleGenerated(response);
-        
-        // Очищаем форму после успешного сохранения
-        setFormData({
-          topic: '',
-          thesis: '',
-          style_examples: '',
-          character_count: 5000,
-          model: 'gpt-4o-mini'
-        });
+      // Отправляем запрос на асинхронную генерацию
+      const response = await articleApi.generateArticleAsync(formData);
+      
+      if (onAsyncGenerationStarted) {
+        onAsyncGenerationStarted(response);
       }
+      
+      // Показываем сообщение об успешном запуске генерации
+      setShowSuccess(true);
+      
+      // Очищаем форму после успешной отправки
+      setFormData({
+        topic: '',
+        thesis: '',
+        style_examples: '',
+        character_count: 5000,
+        model: 'gpt-4o-mini'
+      });
+      
+      // Скрываем сообщение об успехе через 5 секунд
+      setTimeout(() => setShowSuccess(false), 5000);
+      
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Произошла ошибка при генерации статьи');
+      setError(err.response?.data?.detail || 'Произошла ошибка при отправке запроса');
     } finally {
       setIsLoading(false);
     }
@@ -187,47 +171,11 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
           Создание SEO-статьи
         </CardTitle>
         <CardDescription>
-          Заполните форму ниже, чтобы сохранить параметры для генерации SEO-статьи
+          Заполните форму ниже, чтобы запустить генерацию SEO-статьи
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Режим генерации */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Режим генерации
-            </label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={generationMode === 'async' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setGenerationMode('async')}
-                disabled={isLoading}
-                className="flex items-center gap-2"
-              >
-                <Clock className="h-4 w-4" />
-                Асинхронно (рекомендуется)
-              </Button>
-              <Button
-                type="button"
-                variant={generationMode === 'sync' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setGenerationMode('sync')}
-                disabled={isLoading}
-                className="flex items-center gap-2"
-              >
-                <Zap className="h-4 w-4" />
-                Синхронно
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {generationMode === 'async' 
-                ? 'Параметры сохраняются в базе данных, вы можете следить за статьями в истории'
-                : 'Параметры сохраняются в базе данных, вы можете следить за статьями в истории'
-              }
-            </p>
-          </div>
 
           <div className="space-y-2">
             <label htmlFor="topic" className="text-sm font-medium">
@@ -342,7 +290,7 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
             )}
           </div>
 
-          {showSuccess && generationMode === 'async' && (
+          {showSuccess && (
             <div className="p-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />
               <div>
@@ -367,12 +315,12 @@ export const ArticleGenerationForm: React.FC<ArticleGenerationFormProps> = ({
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {generationMode === 'async' ? 'Запускаю генерацию...' : 'Генерирую статью...'}
+                Запускаю генерацию...
               </>
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                {generationMode === 'async' ? 'Сохранить параметры' : 'Сохранить параметры'}
+                Сгенерировать статью
               </>
             )}
           </Button>
