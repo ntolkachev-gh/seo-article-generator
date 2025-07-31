@@ -228,7 +228,7 @@
                     
                     <div id="loading" class="loading text-center py-8">
                         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p class="mt-2 text-gray-600">Генерируем статью...</p>
+                        <p class="mt-2 text-gray-600">Отправляем запрос...</p>
                     </div>
                     
                     <div id="error-message" class="error" style="display: none;"></div>
@@ -436,17 +436,21 @@
             hideError();
 
             try {
-                const response = await axios.post(`${API_BASE_URL}/api/articles/generate`, formData);
+                // Используем асинхронный endpoint
+                const response = await axios.post(`${API_BASE_URL}/api/articles/generate-async`, formData);
                 
-                // Сохраняем статью в локальное хранилище как fallback
-                const articles = JSON.parse(localStorage.getItem('articles') || '[]');
-                articles.unshift(response.data);
-                localStorage.setItem('articles', JSON.stringify(articles));
+                // Показываем сообщение об успешном запуске генерации
+                showError('✅ Генерация запущена! Статья генерируется в фоне. Проверьте статус в разделе "История статей".', 'success');
                 
-                displayArticle(response.data);
-                showModal();
+                // Очищаем форму
+                document.getElementById('topic').value = '';
+                document.getElementById('thesis').value = '';
+                document.getElementById('styleExamples').value = '';
+                document.getElementById('characterCount').value = '5000';
+                document.getElementById('model').value = 'gpt-4o';
+                
             } catch (error) {
-                showError('Ошибка при генерации статьи: ' + (error.response?.data?.detail || error.message));
+                showError('Ошибка при отправке запроса: ' + (error.response?.data?.detail || error.message));
             } finally {
                 showLoading(false);
             }
@@ -512,9 +516,17 @@
             loading.classList.toggle('show', show);
         }
 
-        function showError(message) {
+        function showError(message, type = 'error') {
             errorMessage.textContent = message;
+            errorMessage.className = type === 'success' ? 'success' : 'error';
             errorMessage.style.display = 'block';
+            
+            // Автоматически скрываем сообщение об успехе через 5 секунд
+            if (type === 'success') {
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
+            }
         }
 
         function hideError() {
@@ -553,27 +565,48 @@
                 return;
             }
 
-            const historyHTML = articles.map(article => `
+            const historyHTML = articles.map(article => {
+                const status = article.status || 'pending';
+                const statusBadge = getStatusBadge(status);
+                const seoScore = article.seo_score ? `${article.seo_score}/10` : 'Не готово';
+                
+                return `
                 <div class="border-b border-gray-200 py-4 last:border-b-0">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
-                            <h3 class="text-lg font-semibold">${article.topic}</h3>
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="text-lg font-semibold">${article.topic}</h3>
+                                ${statusBadge}
+                            </div>
                             <p class="text-gray-600 text-sm mt-1">${article.thesis.substring(0, 100)}...</p>
                             <div class="flex items-center space-x-4 text-sm text-gray-500 mt-2">
-                                <span>SEO: ${article.seo_score}/10</span>
+                                <span>SEO: ${seoScore}</span>
                                 <span>Модель: ${article.model_used}</span>
                                 <span>Стиль: ${article.style_examples ? 'Да' : 'Нет'}</span>
                                 <span>${new Date(article.created_at).toLocaleDateString()}</span>
                             </div>
                         </div>
-                        <button onclick="viewArticle('${article.id}')" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                            Просмотр
+                        <button onclick="viewArticle('${article.article_id || article.id}')" 
+                                class="px-3 py-1 ${status === 'completed' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} text-white rounded text-sm"
+                                ${status !== 'completed' ? 'disabled' : ''}>
+                            ${status === 'completed' ? 'Просмотр' : 'Генерируется...'}
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             historyContent.innerHTML = historyHTML;
+        }
+        
+        function getStatusBadge(status) {
+            const badges = {
+                'pending': '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">Ожидает</span>',
+                'generating': '<span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">Генерируется</span>',
+                'completed': '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Готово</span>',
+                'failed': '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Ошибка</span>'
+            };
+            return badges[status] || badges['pending'];
         }
 
         function displayArticle(article) {
