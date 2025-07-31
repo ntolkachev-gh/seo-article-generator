@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 from database import get_db, engine
 from models import Base, ArticleStatus
+import models
 import crud
 import schemas
 from services.serp_service import SERPService
@@ -31,7 +32,7 @@ from config import settings
 # Base.metadata.create_all(bind=engine)
 
 # Webhook configuration
-N8N_WEBHOOK_URL = "https://n8n.tech.ai-community.com/webhook-test/generate-article"
+N8N_WEBHOOK_URL = "https://n8n.tech.ai-community.com/webhook/generate-article"
 
 async def send_webhook_to_n8n(article_id: str, article_data: dict = None):
     """Отправляет webhook на n8n с Article ID и дополнительными данными"""
@@ -481,6 +482,25 @@ async def delete_article(
             detail="Статья не найдена"
         )
     return {"message": "Статья успешно удалена"}
+
+@app.delete("/api/articles/cleanup/pending")
+async def cleanup_pending_articles(
+    db: Session = Depends(get_db)
+):
+    """Удаляет все статьи в статусе ожидания"""
+    try:
+        deleted_count = crud.delete_articles_by_status(db, models.ArticleStatus.PENDING)
+        logger.info(f"🧹 Удалено {deleted_count} статей в статусе ожидания")
+        return {
+            "message": f"Удалено {deleted_count} статей в статусе ожидания",
+            "deleted_count": deleted_count
+        }
+    except Exception as e:
+        logger.error(f"❌ Ошибка при очистке статей: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка при очистке статей: {str(e)}"
+        )
 
 @app.get("/api/articles/{article_id}/seo-recommendations")
 async def get_seo_recommendations(

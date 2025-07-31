@@ -94,4 +94,14 @@ def delete_article(db: Session, article_id: UUID) -> bool:
         db.delete(article)
         db.commit()
         return True
-    return False 
+    return False
+
+def delete_articles_by_status(db: Session, status: models.ArticleStatus) -> int:
+    """Удаляет все статьи с указанным статусом"""
+    try:
+        deleted_count = db.query(models.Article).filter(models.Article.status == status).delete()
+        db.commit()
+        return deleted_count
+    except Exception as e:
+        db.rollback()
+        raise e 
